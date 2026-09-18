@@ -1,0 +1,30 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='760' height='430' viewBox='0 0 760 430' font-family='Inter, Segoe UI, Helvetica, Arial, sans-serif'>
+<rect x='0.5' y='0.5' width='759' height='429' rx='14' fill='#ffffff' stroke='#dfe3ea'/>
+<text x='34' y='38' font-size='18' font-weight='700' fill='#111827'>Tool-calling quality</text>
+<text x='34' y='60' font-size='12.5' fill='#6b7280'>69 deterministic scenarios across 15 categories, scored pass / partial / fail</text>
+<text x='34' y='412' font-size='11' fill='#6b7280'>GB10, 128 GB unified memory, one request at a time, 2026-09-18</text>
+<text x='34' y='84' font-size='14' font-weight='600' fill='#111827'>Qwen3.8-Flash-Next</text>
+<text x='732' y='84' font-size='14' font-weight='700' text-anchor='end' fill='#111827'>91 / 100 &#160;★★★★★&#160;Excellent</text>
+<rect x='34.0' y='92' width='586.7' height='46' fill='#16a34a'/>
+<text x='327.4' y='120.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>58</text>
+<rect x='620.7' y='92' width='101.2' height='46' fill='#f59e0b'/>
+<text x='671.3' y='120.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>10</text>
+<rect x='721.9' y='92' width='10.1' height='46' fill='#cbd5e1'/>
+<rect x='34.5' y='92.5' width='697' height='45' fill='none' stroke='#dfe3ea' rx='6'/>
+<text x='34' y='158' font-size='12' fill='#6b7280'>58 passed &#183; 10 partial &#183; 1 failed &#183; 69 scenarios</text>
+<text x='34' y='170' font-size='14' font-weight='600' fill='#111827'>DeepSeek-V4-Flash</text>
+<text x='732' y='170' font-size='14' font-weight='700' text-anchor='end' fill='#111827'>91 / 100 &#160;★★★★★&#160;Excellent</text>
+<rect x='34.0' y='178' width='586.7' height='46' fill='#16a34a'/>
+<text x='327.4' y='206.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>58</text>
+<rect x='620.7' y='178' width='91.0' height='46' fill='#f59e0b'/>
+<text x='666.2' y='206.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>9</text>
+<rect x='711.8' y='178' width='20.2' height='46' fill='#cbd5e1'/>
+<rect x='34.5' y='178.5' width='697' height='45' fill='none' stroke='#dfe3ea' rx='6'/>
+<text x='34' y='244' font-size='12' fill='#6b7280'>58 passed &#183; 9 partial &#183; 2 failed &#183; 69 scenarios</text>
+<rect x='34.0' y='260' width='14' height='14' rx='3' fill='#16a34a'/>
+<text x='54.0' y='272' font-size='12' fill='#111827'>pass</text>
+<rect x='108.0' y='260' width='14' height='14' rx='3' fill='#f59e0b'/>
+<text x='128.0' y='272' font-size='12' fill='#111827'>partial</text>
+<rect x='203.0' y='260' width='14' height='14' rx='3' fill='#cbd5e1'/>
+<text x='223.0' y='272' font-size='12' fill='#111827'>fail</text>
+</svg>

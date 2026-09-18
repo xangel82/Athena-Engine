@@ -1,0 +1,13 @@
+model,prompt,prompt_tokens,prefill_ms,tokens_per_s,repetition
+Qwen3.8-Flash-Next,L8k,8018,7486.42,1071.0,1
+Qwen3.8-Flash-Next,L32k,31990,30043.673,1064.8,1
+Qwen3.8-Flash-Next,L64k,64013,61193.687,1046.1,1
+Qwen3.8-Flash-Next,L128k,128102,126122.12,1015.7,1
+Qwen3.8-Flash-Next,L196k,196237,198489.348,988.7,1
+Qwen3.8-Flash-Next,L256k,256321,266751.951,960.9,1
+DeepSeek-V4-Flash,L8k,8002,7106.856,1126.0,1
+DeepSeek-V4-Flash,L32k,31961,29227.912,1093.5,1
+DeepSeek-V4-Flash,L64k,63970,59746.313,1070.7,1
+DeepSeek-V4-Flash,L128k,127999,127379.496,1004.9,1
+DeepSeek-V4-Flash,L196k,196134,199614.451,982.6,1
+DeepSeek-V4-Flash,L256k,256221,270170.593,948.4,1

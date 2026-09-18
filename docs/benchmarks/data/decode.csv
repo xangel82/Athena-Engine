@@ -1,0 +1,13 @@
+model,section,mode,context,prompt_tokens,completion_tokens,tokens_per_s
+Qwen3.8-Flash-Next,decode,default,8k,7986,256,29.89
+Qwen3.8-Flash-Next,decode,default,32k,31958,256,35.03
+Qwen3.8-Flash-Next,decode,default,64k,63982,256,31.64
+Qwen3.8-Flash-Next,decode,default,128k,128071,256,30.85
+Qwen3.8-Flash-Next,decode,default,196k,196207,256,28.54
+Qwen3.8-Flash-Next,decode,default,256k,256290,256,32.07
+DeepSeek-V4-Flash,decode,default,8k,7982,256,21.39
+DeepSeek-V4-Flash,decode,default,32k,31943,256,18.33
+DeepSeek-V4-Flash,decode,default,64k,63948,256,17.22
+DeepSeek-V4-Flash,decode,default,128k,127981,256,19.92
+DeepSeek-V4-Flash,decode,default,196k,196114,256,19.67
+DeepSeek-V4-Flash,decode,default,256k,256197,256,19.36

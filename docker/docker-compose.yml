@@ -1,0 +1,35 @@
+# Athena's Engine on a single NVIDIA GB10.
+# Set ATHENA_MODELS_DIR to the folder with the model files:
+#   ATHENA_MODELS_DIR=/path/to/models docker compose up -d
+#
+# The image is set up for DeepSeek V4 Flash.  To run Qwen3.8 Flash Next
+# instead, uncomment the environment block below.
+services:
+  athena-engine:
+    image: ghcr.io/xangel82/athena-engine:0.1.0
+    container_name: athena-engine
+    restart: unless-stopped
+    ports:
+      - "30007:30007"
+    # Qwen3.8 Flash Next instead of the image default:
+    # environment:
+    #   ATHENA_MODEL: /models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+    #   ATHENA_DRAFT: /models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
+    #   ATHENA_MMPROJ: /models/MMPROJ/mmproj-F16.gguf
+    volumes:
+      - ${ATHENA_MODELS_DIR:?set ATHENA_MODELS_DIR}:/models:ro
+      - athena-kv:/kv
+      - athena-state:/state
+    ulimits:
+      memlock: -1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  athena-kv:
+  athena-state:
