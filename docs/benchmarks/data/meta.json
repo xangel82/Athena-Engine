@@ -1,12 +1,12 @@
 {
   "date": "2026-09-18T14:34:29+0000",
-  "host": "athena",
+  "host": "single GB10 desktop",
   "gpu": "NVIDIA GB10, 580.159.03",
   "cuda": "Cuda compilation tools, release 13.0, V13.0.88",
   "kernel": "6.17.0-1026-nvidia",
   "cpu": "Cortex-X925",
   "memory_gb": 121.6,
-  "binary": "/tmp/qwen38-seq/buildimg/native-generation-api-server-cuda/ds4-native-generation-server",
+  "binary": "ds4-native-generation-server",
   "binary_md5": "8d8ea8592abe2d51109784152d4a8d96",
   "binary_bytes": 186380720,
   "commit": "98963c35"
