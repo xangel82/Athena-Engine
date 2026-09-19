@@ -3,6 +3,7 @@
 # and writes the environment that starts the engine with them.
 #
 #   ./install.sh                             ask which model, download into ./models
+#   ./install.sh --model both                install both; %switch picks in chat
 #   ./install.sh --model qwen --dir /data/models
 #   ./install.sh --model qwen --from /mnt/ggufs      use files already here
 #   ./install.sh --model deepseek --verify           check what is already there
@@ -45,7 +46,7 @@ while [ $# -gt 0 ]; do
     --from) FROM_DIR="${2:-}"; shift 2 ;;
     --verify) VERIFY=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
-    -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -98,7 +99,9 @@ EOF
 # model in.
 model_dir() {
   local fallback="$1"
-  [ -n "$ROLE_model" ] && dirname "$ROLE_model" || printf '%s' "$fallback"
+  local current="$ROLE_model"
+  [ "$SLOT" = 2 ] && current="$ROLE_model2"
+  [ -n "$current" ] && dirname "$current" || printf '%s' "$fallback"
 }
 
 build_dspark() {
@@ -199,8 +202,22 @@ fetch() {
 ROLE_model=""
 ROLE_draft=""
 ROLE_mmproj=""
+# The second model, when both are installed: the engine takes it as
+# ATHENA_MODEL_2 and a conversation can then call it in with "%switch".
+ROLE_model2=""
+ROLE_draft2=""
+ROLE_mmproj2=""
+SLOT=1
 
 remember() {
+  if [ "$SLOT" = 2 ]; then
+    case "$1" in
+      model) ROLE_model2="$2" ;;
+      draft) ROLE_draft2="$2" ;;
+      mmproj) ROLE_mmproj2="$2" ;;
+    esac
+    return 0
+  fi
   case "$1" in
     model) ROLE_model="$2" ;;
     draft) ROLE_draft="$2" ;;
@@ -297,6 +314,9 @@ env_file() {
     [ -n "$ROLE_model" ] && say "export ATHENA_MODEL=$ROLE_model"
     [ -n "$ROLE_draft" ] && say "export ATHENA_DRAFT=$ROLE_draft"
     [ -n "$ROLE_mmproj" ] && say "export ATHENA_MMPROJ=$ROLE_mmproj"
+    [ -n "$ROLE_model2" ] && say "export ATHENA_MODEL_2=$ROLE_model2"
+    [ -n "$ROLE_draft2" ] && say "export ATHENA_DRAFT_2=$ROLE_draft2"
+    [ -n "$ROLE_mmproj2" ] && say "export ATHENA_MMPROJ_2=$ROLE_mmproj2"
   } > "$out"
   if [ -z "$ROLE_model" ]; then
     say ""
@@ -309,31 +329,15 @@ env_file() {
   return 0
 }
 
-main() {
-  local failed=0 answer
-  preflight
-  if [ -z "$CHOICE" ]; then
-    say ""
-    say "Which model would you like to install?"
-    say "  1) Qwen3.8 Flash Next   — 97 GB, reads images, the faster of the two"
-    say "  2) DeepSeek V4 Flash    — 87 GB"
-    if [ "$ASSUME_YES" = 1 ]; then
-      CHOICE=qwen
-    else
-      printf 'Choice [1]: '
-      read -r answer
-      case "${answer:-1}" in
-        1) CHOICE=qwen ;;
-        2) CHOICE=deepseek ;;
-        *) die "choose 1 or 2" ;;
-      esac
-    fi
-  fi
-
-  mkdir -p "$MODELS_DIR" || die "cannot create $MODELS_DIR"
-  case "$CHOICE" in
-    qwen) install_model "Qwen3.8 Flash Next" "$(qwen_files)" qwen || failed=1 ;;
+# One model into whichever slot is open.  Both models is the same work done
+# twice, the second time into the second slot.
+install_one() {
+  case "$1" in
+    qwen)
+      install_model "Qwen3.8 Flash Next" "$(qwen_files)" qwen || return 1
+      ;;
     deepseek)
+      local failed=0
       install_model "DeepSeek V4 Flash" "$(deepseek_files)" deepseek || failed=1
       # The sidecar sits beside the model: if it is already there — or
       # anywhere under --from — the shards and the build are spared.
@@ -344,8 +348,47 @@ main() {
       else
         failed=1
       fi
+      return $failed
       ;;
-    *) die "--model must be qwen or deepseek" ;;
+    *) die "--model must be qwen, deepseek or both" ;;
+  esac
+}
+
+main() {
+  local failed=0 answer
+  preflight
+  if [ -z "$CHOICE" ]; then
+    say ""
+    say "Which model would you like to install?"
+    say "  1) Qwen3.8 Flash Next   — 97 GB, reads images, the faster of the two"
+    say "  2) DeepSeek V4 Flash    — 87 GB"
+    say "  3) both                 — 184 GB; one runs, and a conversation"
+    say "                            calls the other in with %switch"
+    if [ "$ASSUME_YES" = 1 ]; then
+      CHOICE=qwen
+    else
+      printf 'Choice [1]: '
+      read -r answer
+      case "${answer:-1}" in
+        1) CHOICE=qwen ;;
+        2) CHOICE=deepseek ;;
+        3) CHOICE=both ;;
+        *) die "choose 1, 2 or 3" ;;
+      esac
+    fi
+  fi
+
+  mkdir -p "$MODELS_DIR" || die "cannot create $MODELS_DIR"
+  case "$CHOICE" in
+    both)
+      # Qwen first: it is the one the engine starts with, and the one a
+      # %switch comes back to.
+      install_one qwen || failed=1
+      SLOT=2
+      install_one deepseek || failed=1
+      SLOT=1
+      ;;
+    *) install_one "$CHOICE" || failed=1 ;;
   esac
 
   env_file || failed=1
@@ -359,6 +402,12 @@ main() {
   say "Done. To start the engine:"
   say "  source $MODELS_DIR/athena.env"
   say "  ./athena-engine/athena-engine.sh"
+  if [ -n "$ROLE_model2" ]; then
+    say ""
+    say "Both models are in place. The engine starts with the first and a"
+    say "conversation calls the other in by writing, as a message:"
+    say "  %switch deepseek"
+  fi
 }
 
 main "$@"

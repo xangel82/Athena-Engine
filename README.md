@@ -173,12 +173,14 @@ the answer in progress pays nothing for it.
    ```bash
    ./install.sh                      # asks which model, downloads into ./models
    ./install.sh --model qwen --dir /data/models
+   ./install.sh --model both         # both, so a chat can switch between them
    ```
 
-   It downloads about 97 GB for Qwen3.8 Flash Next or 87 GB for DeepSeek V4
-   Flash, checks each file against the checksum the repository publishes, and
-   **resumes**: stop it at any point, run the same command again, and it
-   carries on from where it stopped rather than starting over.
+   It downloads about 97 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
+   Flash or 184 GB for both, checks each file against the checksum the
+   repository publishes, and **resumes**: stop it at any point, run the same
+   command again, and it carries on from where it stopped rather than
+   starting over.
 
    If the files are already on the machine, point the installer at them
    instead of downloading anything:
@@ -283,7 +285,8 @@ with its small KV ring, Qwen mapped with the whole context — because a switch
 changes the model, not the machine it runs on. Requests that arrive mid-switch
 wait for the new model rather than failing.
 
-To offer both, name the second one when you start the engine:
+`./install.sh --model both` writes both of these for you; by hand, it is the
+second model named alongside the first:
 
 ```bash
 export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf

@@ -9,7 +9,13 @@ First binary release for NVIDIA GB10.
 - DeepSeek V4 Flash with context up to 262,144 tokens and DSpark speculative
   decoding.
 - Qwen3.8 Flash Next (Unsloth UD-IQ4_XS) with context up to 262,144 tokens and
-  speculative decoding through its MTP head.
+  speculative decoding through its MTP head. It reads images and PDF pages
+  when a projector is given to it.
+- Either model, or both. With both in place a conversation replaces the one
+  that is running by writing `%switch deepseek`: the engine drains what it is
+  serving, releases the model, loads the other and answers from it, reporting
+  each step as it happens. The engine never stops, and if the new model
+  cannot be loaded the previous one comes back.
 
 ### Engine
 
@@ -35,7 +41,20 @@ First binary release for NVIDIA GB10.
   of rejected, and the first streamed event carries the first token.
 - Every model is served under the name `Athena` by default, so clients are
   configured once; `--api-model model` serves the model's own name and
-  `--model-name` any chosen name.
+  `--model-name` any chosen name. The name does not change when the model
+  behind it does.
+- `tool_choice` as `auto`, `none`, `required` or a named function;
+  `parallel_tool_calls`; and `response_format` as `json_object` or
+  `json_schema`. All of them on both models.
+
+### Installing and running
+
+- `install.sh` puts one model or both on the machine: it uses files already
+  there, downloads only what is missing, checks each file against the
+  checksum the repository publishes, and resumes an interrupted download
+  rather than starting it again.
+- A container image that carries the compiled engine and nothing else; the
+  weights stay on the host and are mounted read-only.
 
 ### Measured on one GB10
 
@@ -53,3 +72,8 @@ draft. Raw data in `docs/benchmarks/data`.
 | Decode, 256k context | 19.4 tokens/s | 32.1 tokens/s |
 | New 2,048-token question on a cached 8k / 128k / 250k context | first token in 2.7 / 6.7 / 11.0 s | |
 | Restoring a 141,519-token conversation from disk | 2.1 s | |
+
+Following instructions — 69 tool-calling scenarios covering forced calls,
+parallel calls, schema-bound answers, recovery from tool failures and refusals:
+**91 out of 100 for both models** (58 passed, 10 and 9 partial, 1 and 2
+failed). Raw transcripts in `docs/benchmarks/data`.
