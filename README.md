@@ -58,6 +58,9 @@ personal use, research and education.
 - **One name, whichever model is behind it.** The API serves the model as
   `Athena`: configure your clients once, and they keep working when you swap
   DeepSeek for Qwen and back.
+- **Both models at once, if you want them.** Start the engine with the two
+  of them and a conversation can call the other in — `%switch deepseek` —
+  watching the release and the load as they happen.
 
 ## Supported models
 
@@ -247,6 +250,53 @@ are read by the engine itself and handed to the model as text. A PDF gives up
 its text layer, so a page that is only a scanned photograph yields nothing —
 there is no OCR.
 
+### Two models, one engine
+
+You choose what the engine runs: Qwen3.8 Flash Next, DeepSeek V4 Flash, or
+both. With one model it behaves as any server does. With both, a conversation
+can ask for the other one and watch it arrive:
+
+```
+%switch deepseek
+```
+
+```
+Switching to deepseek.
+Flushing checkpoints still being written.
+Releasing qwen.
+Memory returned: 26.7 GiB (available now 118.4 GiB).
+deepseek needs 86.4 GiB on disk; 118.4 GiB available.
+Loading deepseek.
+Ready in 43.3 s.
+```
+
+Those lines arrive as each one becomes true, in the reasoning channel of a
+streaming reply, so the minute a switch takes is a minute you can watch
+rather than a minute of silence. `%switch qwen` goes back. A machine that
+holds one model of its size cannot hold two, so the engine releases before it
+loads, and it checks that the room is really there: if it is not, nothing is
+allocated, the model you had comes back, and the answer tells you both
+numbers.
+
+A model keeps its own deployment across a switch — DeepSeek device-resident
+with its small KV ring, Qwen mapped with the whole context — because a switch
+changes the model, not the machine it runs on. Requests that arrive mid-switch
+wait for the new model rather than failing.
+
+To offer both, name the second one when you start the engine:
+
+```bash
+export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+export ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
+export ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf
+export ATHENA_MODEL_2=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
+export ATHENA_DRAFT_2=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
+./athena-engine/athena-engine.sh
+```
+
+The API still serves one name, `Athena`, whichever model is behind it, so
+nothing in your clients changes when the model does.
+
 ### In a container
 
 The image carries the engine and the CUDA runtime it is validated against;
@@ -256,12 +306,13 @@ the model files stay on the host and are mounted read-only.
 ATHENA_MODELS_DIR=/path/to/models docker compose -f docker/docker-compose.yml up -d
 ```
 
-It starts DeepSeek V4 Flash. To run Qwen3.8 Flash Next instead, uncomment the
-`environment:` block in `docker/docker-compose.yml`, which names the Qwen
-model, its MTP head and its vision encoder. Two named volumes keep what
-should outlive the container: `/kv`, where conversations are checkpointed, and
-`/state`. The container needs the NVIDIA runtime and all GPUs
-(`--gpus all`), and `memlock` unlimited.
+It starts DeepSeek V4 Flash. The `environment:` block in
+`docker/docker-compose.yml` chooses what runs: Qwen3.8 Flash Next instead,
+or both of them, and with both the container answers `%switch` like any
+other deployment. Two named volumes keep what should outlive the container:
+`/kv`, where conversations are checkpointed, and `/state`. The container
+needs the NVIDIA runtime and all GPUs (`--gpus all`), and `memlock`
+unlimited.
 
 
 ## API

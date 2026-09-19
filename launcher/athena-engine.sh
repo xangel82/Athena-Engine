@@ -10,6 +10,11 @@
 #   ATHENA_MMPROJ         vision encoder for Qwen3.8 Flash Next; without it
 #                         the model answers text only
 #   ATHENA_IMAGE_TOKENS   budget per image        (default 1024)
+#   ATHENA_MODEL_2        a second model the engine can be told to load
+#                         while it runs, with "%switch qwen" or
+#                         "%switch deepseek" written in a conversation
+#   ATHENA_DRAFT_2        its speculative decoding head
+#   ATHENA_MMPROJ_2       its vision encoder, if it has one
 #   ATHENA_API_MODEL      athena (default): serve the model as "Athena";
 #                         model: serve it by its family name
 #   ATHENA_MODEL_NAME     serve this exact name instead of either
@@ -70,7 +75,7 @@ args=(--model "$model"
       --context "${ATHENA_CONTEXT:-262144}"
       --tokens "${ATHENA_MAX_TOKENS:-16384}"
       --model-residency "$residency"
-      --warm-weights off)
+      --warm-weights "$(test "$residency" = mapped && echo on || echo off)")
 
 [ -z "$kv_capacity" ] || args+=(--kv-capacity "$kv_capacity")
 
@@ -92,6 +97,46 @@ if [ -n "${ATHENA_MMPROJ:-}" ]; then
   [ "$family" = qwen3.8-flash-next ] || fail "ATHENA_MMPROJ needs qwen3.8-flash-next; $family has no vision encoder"
   [ -r "$ATHENA_MMPROJ" ] || fail "vision encoder is not readable: $ATHENA_MMPROJ"
   args+=(--mmproj "$ATHENA_MMPROJ" --image-max-tokens "${ATHENA_IMAGE_TOKENS:-1024}")
+fi
+
+# A second model makes the engine switchable: both are registered, and a
+# conversation can ask for either with "%switch <name>".  Each family keeps
+# the deployment it wants — DeepSeek device-resident with its small KV ring,
+# Qwen mapped with the whole context — because a switch changes the model,
+# not the machine it runs on.
+register_model() {  # name, model, draft, mmproj
+  local name="$1" path="$2" draft="${3:-}" mmproj="${4:-}"
+  local fam arch entry
+  arch="$(head -c 65536 "$path" | LC_ALL=C grep -a -o -E 'deepseek4|qwen4exp' | head -n 1 || true)"
+  case "$arch" in
+    deepseek4) fam=deepseek-v4-flash ;;
+    qwen4exp)  fam=qwen3.8-flash-next ;;
+    *) fail "cannot tell the model family of $path" ;;
+  esac
+  entry="$name=$path,family=$fam"
+  if [ "$fam" = deepseek-v4-flash ]; then
+    entry="$entry,residency=device,kv=${ATHENA_KV_CAPACITY:-8192}"
+    [ -n "$draft" ] && entry="$entry,draft=$draft"
+  else
+    entry="$entry,residency=mapped"
+    [ -n "$draft" ] && entry="$entry,mtp=$draft"
+    [ -n "$mmproj" ] && entry="$entry,mmproj=$mmproj"
+  fi
+  args+=(--alt-model "$entry")
+}
+
+if [ -n "${ATHENA_MODEL_2:-}" ]; then
+  [ -r "$ATHENA_MODEL_2" ] || fail "second model is not readable: $ATHENA_MODEL_2"
+  case "$family" in
+    deepseek-v4-flash) first=deepseek ;;
+    *) first=qwen ;;
+  esac
+  case "$first" in
+    deepseek) second=qwen ;;
+    *) second=deepseek ;;
+  esac
+  register_model "$first" "$model" "${ATHENA_DRAFT:-}" "${ATHENA_MMPROJ:-}"
+  register_model "$second" "$ATHENA_MODEL_2" "${ATHENA_DRAFT_2:-}" "${ATHENA_MMPROJ_2:-}"
 fi
 
 kv_dir="${ATHENA_KV_DIR-$HOME/.cache/athena-engine/kv}"
