@@ -49,10 +49,13 @@ First binary release for NVIDIA GB10.
 
 ### Installing and running
 
-- `install.sh` puts one model or both on the machine: it uses files already
-  there, downloads only what is missing, checks each file against the
-  checksum the repository publishes, and resumes an interrupted download
-  rather than starting it again.
+- The installer, which comes in the release archive, puts one model or both
+  on the machine: it uses files already there, downloads only what is
+  missing, checks each file against the checksum the repository publishes,
+  and resumes an interrupted download rather than starting it again.
+- DeepSeek's DSpark draft head is built on the machine that installs it, out
+  of the three official weight shards, with a converter that ships in the
+  archive. Nothing has to be compiled by hand.
 - A container image that carries the compiled engine and nothing else; the
   weights stay on the host and are mounted read-only.
 

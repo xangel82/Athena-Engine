@@ -167,13 +167,13 @@ the answer in progress pays nothing for it.
 1. Download the release archive for `linux-arm64-gb10` from
    [Releases](https://github.com/xangel82/Athena-Engine/releases) and extract it.
 
-2. Get the model files. `install.sh` fetches them and writes the environment
-   that points the engine at them:
+2. Get the model files. The installer that came in the archive fetches them
+   and writes the environment that points the engine at them:
 
    ```bash
-   ./install.sh                      # asks which model, downloads into ./models
-   ./install.sh --model qwen --dir /data/models
-   ./install.sh --model both         # both, so a chat can switch between them
+   ./athena-engine/install.sh                 # asks which model, downloads into ./models
+   ./athena-engine/install.sh --model qwen --dir /data/models
+   ./athena-engine/install.sh --model both    # both, so a chat can switch between them
    ```
 
    It downloads about 97 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
@@ -186,12 +186,17 @@ the answer in progress pays nothing for it.
    instead of downloading anything:
 
    ```bash
-   ./install.sh --model qwen --from /mnt/ggufs
+   ./athena-engine/install.sh --model qwen --from /mnt/ggufs
    ```
 
    It looks for each file by name anywhere under that directory, uses it
    where it lies, and fetches only what is missing. Add `--verify` to check
    what is already there against the published checksums.
+
+   DeepSeek's DSpark draft head is not published as a file: the installer
+   builds it on the machine, out of the three official weight shards, with
+   the converter that came in the archive. It takes a few minutes and needs
+   no compiler of yours.
 
 3. Start the engine:
 
@@ -285,7 +290,7 @@ with its small KV ring, Qwen mapped with the whole context — because a switch
 changes the model, not the machine it runs on. Requests that arrive mid-switch
 wait for the new model rather than failing.
 
-`./install.sh --model both` writes both of these for you; by hand, it is the
+`./athena-engine/install.sh --model both` writes both of these for you; by hand, it is the
 second model named alongside the first:
 
 ```bash

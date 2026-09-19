@@ -26,9 +26,9 @@ pins the validated one.
 ## Models
 
 The engine runs one model at a time. Model weights are published by their
-authors and are not distributed with the engine; `install.sh` in the root of
-this repository fetches them, resuming if it is interrupted, and checks each
-file against the checksum its repository publishes.
+authors and are not distributed with the engine; the installer that comes in
+the release archive fetches them, resuming if it is interrupted, and checks
+each file against the checksum its repository publishes.
 
 ### DeepSeek V4 Flash — about 93 GB
 
@@ -40,7 +40,7 @@ From [antirez/deepseek-v4-gguf](https://huggingface.co/antirez/deepseek-v4-gguf)
 | `DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf` | DSpark sidecar (speculative decoding) |
 
 The DSpark sidecar is not published as a GGUF. It belongs beside the model
-it drafts for, and `install.sh` puts it there: if the file is already next
+it drafts for, and the installer puts it there: if the file is already next
 to the model — or anywhere under the directory given to `--from` — it is
 used as it lies, and otherwise it is built from the three official weight
 shards that carry the draft layers, published by DeepSeek at

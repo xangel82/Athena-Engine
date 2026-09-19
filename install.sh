@@ -87,7 +87,7 @@ EOF
 dspark_shards() {
   cat <<EOF
 dspark-hf/config.json|$DSPARK_REPO/config.json|2 KB|none
-dspark-hf/model.safetensors.index.json|$DSPARK_REPO/model.safetensors.index.json|5.6 MB|none
+dspark-hf/model.safetensors.index.json|$DSPARK_REPO/model.safetensors.index.json|5.6 MB|shards
 dspark-hf/model-00046-of-00048.safetensors|$DSPARK_REPO/model-00046-of-00048.safetensors|3.4 GB|none
 dspark-hf/model-00047-of-00048.safetensors|$DSPARK_REPO/model-00047-of-00048.safetensors|3.3 GB|none
 dspark-hf/model-00048-of-00048.safetensors|$DSPARK_REPO/model-00048-of-00048.safetensors|3.4 GB|none
@@ -107,9 +107,22 @@ model_dir() {
 build_dspark() {
   local downloads="$1"
   local dir; dir="$(model_dir "$downloads")"
+  # The shards may have been downloaded, or found somewhere else entirely;
+  # the converter is given the folder they turned out to be in.
+  local hf="${ROLE_shards:-$downloads/dspark-hf}"
   local out="$dir/$DSPARK_FILE"
-  local tool="$PWD/athena-engine/bin/deepseek4-quantize"
-  [ -x "$tool" ] || tool="$(command -v deepseek4-quantize 2>/dev/null)"
+  # The converter ships in the release archive.  It is looked for beside an
+  # archive extracted here, beside one extracted next to this script, and
+  # under this script itself — which is where it is when the installer is
+  # run from inside the archive it came in.
+  local tool="" here candidate
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  for candidate in "$PWD/athena-engine/bin/deepseek4-quantize" \
+                   "$here/athena-engine/bin/deepseek4-quantize" \
+                   "$here/bin/deepseek4-quantize"; do
+    [ -x "$candidate" ] && { tool="$candidate"; break; }
+  done
+  [ -n "$tool" ] || tool="$(command -v deepseek4-quantize 2>/dev/null)"
   if [ -f "$out" ]; then
     say "  have  $DSPARK_FILE"
     remember draft "$out"
@@ -126,7 +139,7 @@ build_dspark() {
     say "  $dir is not writable; leaving DeepSeek without speculative decoding."
     return 1
   fi
-  if "$tool" --hf "$downloads/dspark-hf" --dspark-sidecar \
+  if "$tool" --hf "$hf" --dspark-sidecar \
        --routed-w1 iq2_xxs --routed-w2 q2_k --routed-w3 iq2_xxs \
        --out "$out.partial" --overwrite; then
     mv -f "$out.partial" "$out"
@@ -208,8 +221,15 @@ ROLE_model2=""
 ROLE_draft2=""
 ROLE_mmproj2=""
 SLOT=1
+# Not a model file: the folder the DSpark weight shards were found in, which
+# the sidecar is built from and which belongs to neither slot.
+ROLE_shards=""
 
 remember() {
+  if [ "$1" = shards ]; then
+    ROLE_shards="$(dirname "$2")"
+    return 0
+  fi
   if [ "$SLOT" = 2 ]; then
     case "$1" in
       model) ROLE_model2="$2" ;;
