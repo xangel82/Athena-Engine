@@ -18,43 +18,37 @@
 <text x='22' y='230.0' font-size='12' fill='#6b7280' text-anchor='middle' transform='rotate(-90 22 230.0)'>tokens / s</text>
 <text x='405.0' y='394' font-size='12' fill='#6b7280' text-anchor='middle'>Context (tokens)</text>
 <text x='92.0' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>8k</text>
-<text x='148.9' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>8k</text>
-<text x='205.8' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>32k</text>
-<text x='262.7' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>32k</text>
-<text x='319.6' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>64k</text>
-<text x='376.5' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>64k</text>
-<text x='433.5' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>128k</text>
-<text x='490.4' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>128k</text>
-<text x='547.3' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>196k</text>
-<text x='604.2' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>196k</text>
-<text x='661.1' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>256k</text>
+<text x='217.2' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>32k</text>
+<text x='342.4' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>64k</text>
+<text x='467.6' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>128k</text>
+<text x='592.8' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>196k</text>
 <text x='718.0' y='372' font-size='11.5' text-anchor='middle' fill='#6b7280'>256k</text>
-<path d='M148.9,169.7 L262.7,138.3 L376.5,159.0 L490.4,163.8 L604.2,177.9 L718.0,156.4' fill='none' stroke='#4f46e5' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>
-<circle cx='148.9' cy='169.7' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
-<text x='148.9' y='158.7' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>29.9</text>
-<circle cx='262.7' cy='138.3' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
-<text x='262.7' y='127.3' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>35</text>
-<circle cx='376.5' cy='159.0' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
-<text x='376.5' y='148.0' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>31.6</text>
-<circle cx='490.4' cy='163.8' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
-<text x='490.4' y='152.8' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>30.9</text>
-<circle cx='604.2' cy='177.9' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
-<text x='604.2' y='166.9' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>28.5</text>
+<path d='M92.0,169.7 L217.2,138.3 L342.4,159.0 L467.6,163.8 L592.8,177.9 L718.0,156.4' fill='none' stroke='#4f46e5' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='92.0' cy='169.7' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
+<text x='92.0' y='158.7' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>29.9</text>
+<circle cx='217.2' cy='138.3' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
+<text x='217.2' y='127.3' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>35</text>
+<circle cx='342.4' cy='159.0' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
+<text x='342.4' y='148.0' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>31.6</text>
+<circle cx='467.6' cy='163.8' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
+<text x='467.6' y='152.8' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>30.9</text>
+<circle cx='592.8' cy='177.9' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
+<text x='592.8' y='166.9' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>28.5</text>
 <circle cx='718.0' cy='156.4' r='4.5' fill='#ffffff' stroke='#4f46e5' stroke-width='2.5'/>
 <text x='718.0' y='145.4' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>32.1</text>
-<path d='M92.0,221.5 L205.8,240.2 L319.6,247.0 L433.5,230.5 L547.3,232.0 L661.1,233.9' fill='none' stroke='#0ea5e9' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>
+<path d='M92.0,221.5 L217.2,240.2 L342.4,247.0 L467.6,230.5 L592.8,232.0 L718.0,233.9' fill='none' stroke='#0ea5e9' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'/>
 <circle cx='92.0' cy='221.5' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
 <text x='92.0' y='210.5' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>21.4</text>
-<circle cx='205.8' cy='240.2' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
-<text x='205.8' y='229.2' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>18.3</text>
-<circle cx='319.6' cy='247.0' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
-<text x='319.6' y='236.0' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>17.2</text>
-<circle cx='433.5' cy='230.5' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
-<text x='433.5' y='219.5' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>19.9</text>
-<circle cx='547.3' cy='232.0' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
-<text x='547.3' y='221.0' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>19.7</text>
-<circle cx='661.1' cy='233.9' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
-<text x='661.1' y='222.9' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>19.4</text>
+<circle cx='217.2' cy='240.2' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
+<text x='217.2' y='229.2' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>18.3</text>
+<circle cx='342.4' cy='247.0' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
+<text x='342.4' y='236.0' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>17.2</text>
+<circle cx='467.6' cy='230.5' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
+<text x='467.6' y='219.5' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>19.9</text>
+<circle cx='592.8' cy='232.0' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
+<text x='592.8' y='221.0' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>19.7</text>
+<circle cx='718.0' cy='233.9' r='4.5' fill='#ffffff' stroke='#0ea5e9' stroke-width='2.5'/>
+<text x='718.0' y='222.9' font-size='11.5' font-weight='600' text-anchor='middle' fill='#111827'>19.4</text>
 <line x1='34.0' y1='84' x2='54.0' y2='84' stroke='#4f46e5' stroke-width='3'/>
 <text x='60.0' y='88' font-size='12' fill='#111827'>Qwen3.8-Flash-Next</text>
 <line x1='210.0' y1='84' x2='230.0' y2='84' stroke='#0ea5e9' stroke-width='3'/>
