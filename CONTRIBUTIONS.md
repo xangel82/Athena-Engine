@@ -56,7 +56,8 @@ not distributed with the engine.
 
 ## Licenses
 
-- Athena's Engine: [PolyForm Strict License 1.0.0](LICENSE.md).
+- Athena's Engine: [PolyForm Strict License 1.0.0](LICENSE.md), with an additional
+  permission for internal use by small companies.
 - Open-source components and their notices: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Contributing

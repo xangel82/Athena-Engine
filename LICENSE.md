@@ -59,3 +59,21 @@ The **licensor** is the individual or entity offering these terms, and the **sof
 **Your licenses** are all the licenses granted to you for the software under these terms.
 
 **Use** means anything you do with the software requiring one of your licenses.
+
+---
+
+# Additional Permission
+
+The licensor grants this permission in addition to the terms above. It uses
+the definitions above, and it applies to every version of the software the
+licensor has released, including versions released before it was added.
+
+## Small Company Internal Use
+
+Use of the software for the internal business operations of you and your
+company is use for a permitted purpose if your company has fewer than 30 total
+individuals working as employees and independent contractors, and less than
+500,000 USD total revenue in the prior tax year.
+
+This permission does not allow you to distribute the software, to make changes
+or new works based on it, or to provide it to others as a product or service.

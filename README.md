@@ -34,7 +34,7 @@ model.
 
 **Within reach.** Advanced AI should not be the privilege of whoever owns a
 data center. One desktop machine is enough, and the engine is free for
-personal use, research and education.
+personal use, research, education, and developers and small companies at work.
 
 ## What it does
 
@@ -369,14 +369,19 @@ Thank you, Salvatore.
 ## Licenses and contributions
 
 Athena's Engine is distributed as binaries under the
-[PolyForm Strict License 1.0.0](LICENSE.md). In short:
+[PolyForm Strict License 1.0.0](LICENSE.md), with an additional permission for
+small companies. In short:
 
 - **Free for noncommercial use** — personal use, research, study, hobby
   projects, and use by schools, public research institutions, charities and
   government bodies.
-- **No redistribution and no modified versions.** Download the engine from
-  this repository.
-- **Commercial use needs a separate license.** Open an issue in this
+- **Free for developers and small companies at work** — use inside your own
+  business, as a coding assistant, for your agents and your internal tools, if
+  your company has fewer than 30 people and less than 500,000 USD in
+  yearly revenue.
+- **No redistribution, no modified versions, and no offering it to others as a
+  product or service.** Download the engine from this repository.
+- **Any other commercial use needs a separate license.** Open an issue in this
   repository to get in touch.
 
 This summary is for convenience; the [license text](LICENSE.md) is what applies.

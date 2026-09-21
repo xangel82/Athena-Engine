@@ -59,6 +59,15 @@ First binary release for NVIDIA GB10.
 - A container image that carries the compiled engine and nothing else; the
   weights stay on the host and are mounted read-only.
 
+### License
+
+- Free for noncommercial use under the PolyForm Strict License 1.0.0, and —
+  by an additional permission — free for internal use at work by developers
+  and companies with fewer than 30 people and less than 500,000 USD in
+  yearly revenue. The permission covers every version released, this one
+  included. Redistribution, modified versions and offering the engine to
+  others as a product or service are not allowed.
+
 ### Measured on one GB10
 
 One request at a time, each model in the configuration the launcher ships:
