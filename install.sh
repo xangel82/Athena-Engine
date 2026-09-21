@@ -172,11 +172,21 @@ free_gb() { df -P -BG "$1" 2>/dev/null | awk 'NR==2 {gsub("G","",$4); print $4}'
 # gets the sha256 of its bytes (64 hex digits), a small one kept in git gets
 # the sha1 of its git blob (40 hex digits) — config.json and the tensor index
 # are of the second kind.  Each is checked against the digest it is given.
-published_sha() {
+#
+# One request gives both facts: the digest, and the size — "x-linked-size"
+# for a file in LFS storage, the length of the final response for one kept in
+# git.  Printed as "<digest>|<size>"; either may be empty when the repository
+# cannot be reached.
+published_facts() {
   [ -n "${1:-}" ] || return 0
-  curl -sIL --max-time 30 "$1" 2>/dev/null | tr -d '\r' |
-    awk 'tolower($1) == "x-linked-etag:" { gsub(/"/, "", $2); print $2 }' | tail -1
+  curl -sIL --max-time 30 "$1" 2>/dev/null | tr -d '\r' | awk '
+    tolower($1) == "x-linked-etag:"  { d = $2; gsub(/"/, "", d) }
+    tolower($1) == "x-linked-size:"  { s = $2 }
+    tolower($1) == "content-length:" { n = $2 }
+    END { print d "|" (s != "" ? s : n) }'
 }
+
+published_sha() { published_facts "${1:-}" | cut -d'|' -f1; }
 
 # What `git hash-object` prints, without needing git: the sha1 of a
 # "blob <size>" header, a NUL, and the bytes.
@@ -184,6 +194,25 @@ git_blob_sha1() {
   local size
   size="$(wc -c < "$1" | tr -d ' ')"
   { printf 'blob %s\0' "$size"; cat "$1"; } | sha1sum | cut -d' ' -f1
+}
+
+# Is this file, found on the machine by its name, the one the repository
+# publishes?  The name alone proves nothing: config.json, the tensor index,
+# the weight shards and mmproj-F16.gguf are called the same in almost every
+# model repository.  The size must match, and a small file kept in git is
+# checked against its digest too, which costs nothing at that size.  When the
+# repository cannot be reached there is nothing to compare against, and the
+# file is taken on trust.
+same_file() {
+  local path="$1" facts="${2:-}" want_sha want_size
+  want_sha="${facts%%|*}"
+  want_size="${facts#*|}"
+  [ -n "$want_size" ] || return 0
+  [ "$(wc -c < "$path" | tr -d ' ')" = "$want_size" ] || return 1
+  if [ "${#want_sha}" = 40 ] && command -v sha1sum >/dev/null; then
+    [ "$(git_blob_sha1 "$path")" = "$want_sha" ] || return 1
+  fi
+  return 0
 }
 
 verify_file() {
@@ -262,24 +291,36 @@ remember() {
   esac
 }
 
-# Where this file already is on this machine, if it is anywhere.  --from is
+# Every file on this machine with this name, nearest first.  --from is
 # searched whole; without it the usual places are tried in turn, each only a
-# few levels deep, and the search stops at the first match.  -xtype f so a
-# file kept as a symlink counts too.
-locate_file() {
-  local name="$1" place found
+# few levels deep.  -xtype f so a file kept as a symlink counts too.
+candidates() {
+  local name="$1" place
   if [ -n "$FROM_DIR" ]; then
-    find "$FROM_DIR" -name "$name" -xtype f -print -quit 2>/dev/null
+    find "$FROM_DIR" -name "$name" -xtype f -print 2>/dev/null
     return 0
   fi
   while IFS= read -r place; do
     [ -n "$place" ] || continue
-    found="$(find "$place" -maxdepth 4 -name "$name" -xtype f -print -quit 2>/dev/null)"
-    if [ -n "$found" ]; then
-      printf '%s\n' "$found"
+    find "$place" -maxdepth 4 -name "$name" -xtype f -print 2>/dev/null
+  done <<< "$(default_places)"
+}
+
+# Where this file already is on this machine, if it is anywhere.  Given the
+# address it is published at, a file that only shares its name is passed
+# over and the search goes on; the first that is the same file is the one
+# used.
+locate_file() {
+  local name="$1" url="${2:-}" facts="" candidate
+  if [ -n "$url" ]; then facts="$(published_facts "$url")"; fi
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] || continue
+    if same_file "$candidate" "$facts"; then
+      printf '%s\n' "$candidate"
       return 0
     fi
-  done <<< "$(default_places)"
+    printf '  skip  %s — same name, not the same file\n' "$candidate" >&2
+  done < <(candidates "$name")
   return 0
 }
 
@@ -312,7 +353,7 @@ resolve() {
     remember "$role" "$path"
     return 0
   fi
-  found="$(locate_file "$name")"
+  found="$(locate_file "$name" "$url")"
   if [ -n "$found" ]; then
     say "  found $name in $(dirname "$found")"
     if [ "$VERIFY" = 1 ]; then verify_file "$found" "$url" || return 1; fi
