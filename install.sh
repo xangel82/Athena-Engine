@@ -166,21 +166,38 @@ preflight() {
 
 free_gb() { df -P -BG "$1" 2>/dev/null | awk 'NR==2 {gsub("G","",$4); print $4}'; }
 
-# HuggingFace publishes the sha256 of each file in x-linked-etag, so a
-# damaged download is caught here rather than by the engine hours later.
+# HuggingFace publishes a digest of each file in x-linked-etag, so a damaged
+# download is caught here rather than by the engine hours later.  What the
+# digest is depends on where the file is kept: a large file in LFS storage
+# gets the sha256 of its bytes (64 hex digits), a small one kept in git gets
+# the sha1 of its git blob (40 hex digits) — config.json and the tensor index
+# are of the second kind.  Each is checked against the digest it is given.
 published_sha() {
   [ -n "${1:-}" ] || return 0
   curl -sIL --max-time 30 "$1" 2>/dev/null | tr -d '\r' |
     awk 'tolower($1) == "x-linked-etag:" { gsub(/"/, "", $2); print $2 }' | tail -1
 }
 
+# What `git hash-object` prints, without needing git: the sha1 of a
+# "blob <size>" header, a NUL, and the bytes.
+git_blob_sha1() {
+  local size
+  size="$(wc -c < "$1" | tr -d ' ')"
+  { printf 'blob %s\0' "$size"; cat "$1"; } | sha1sum | cut -d' ' -f1
+}
+
 verify_file() {
-  local path="$1" url="${2:-}" want
-  command -v sha256sum >/dev/null || return 0
+  local path="$1" url="${2:-}" want have
   want="$(published_sha "$url")"
-  [ -n "$want" ] || return 0
+  case "${#want}" in
+    64) command -v sha256sum >/dev/null || return 0
+        have="$(sha256sum "$path" | cut -d' ' -f1)" ;;
+    40) command -v sha1sum >/dev/null || return 0
+        have="$(git_blob_sha1 "$path")" ;;
+    *)  return 0 ;;
+  esac
   say "  check $(basename "$path")"
-  [ "$(sha256sum "$path" | cut -d' ' -f1)" = "$want" ] && return 0
+  [ "$have" = "$want" ] && return 0
   say "  checksum does not match what the repository publishes"
   return 1
 }
