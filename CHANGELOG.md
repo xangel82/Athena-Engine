@@ -11,11 +11,15 @@ First binary release for NVIDIA GB10.
 - Qwen3.8 Flash Next (Unsloth UD-IQ4_XS) with context up to 262,144 tokens and
   speculative decoding through its MTP head. It reads images and PDF pages
   when a projector is given to it.
-- Either model, or both. With both in place a conversation replaces the one
-  that is running by writing `%switch deepseek`: the engine drains what it is
+- DeepSeek V4 Flash Vision-Exp, the DeepSeek checkpoint that reads images,
+  with the DSpark drafter and the image encoder published beside it.
+- Any of the three, or several. With more than one in place a conversation
+  replaces the one that is running by writing `%switch qwen`,
+  `%switch deepseek` or `%switch visio`: the engine drains what it is
   serving, releases the model, loads the other and answers from it, reporting
   each step as it happens. The engine never stops, and if the new model
-  cannot be loaded the previous one comes back.
+  cannot be loaded the previous one comes back. `install.sh --model all`
+  puts all three in place.
 
 ### Engine
 
