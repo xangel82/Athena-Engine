@@ -180,10 +180,21 @@ session is idle, so the answer in progress pays nothing for it.
 
 ## Quick start
 
-1. Download the release archive for `linux-arm64-gb10` from
-   [Releases](https://github.com/xangel82/Athena-Engine/releases) and extract it.
+1. Get the engine. It is published as a container image, and the same
+   files run without a container once copied out of it:
 
-2. Get the model files. The installer that came in the archive fetches them
+   ```bash
+   docker pull ghcr.io/xangel82/athena-engine:0.2.0
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.0
+   docker cp athena-copy:/opt/athena-engine ./athena-engine
+   docker rm athena-copy
+   ```
+
+   That leaves `./athena-engine` with the engine, its launcher and its
+   installer. To run the container itself instead, see
+   [In a container](#in-a-container).
+
+2. Get the model files. The installer that came with the engine fetches them
    and writes the environment that points the engine at them:
 
    ```bash
@@ -214,7 +225,7 @@ session is idle, so the answer in progress pays nothing for it.
 
    DeepSeek V4 Flash's DSpark draft head is not published as a file: the
    installer builds it on the machine, out of the three official weight
-   shards, with the converter that came in the archive. It takes a few
+   shards, with the converter that came with the engine. It takes a few
    minutes and needs no compiler of yours. Vision-Exp's drafter and image
    encoder are published beside it, so nothing is built for it.
 
@@ -432,7 +443,7 @@ small companies. In short:
   your company has fewer than 30 people and less than 500,000 USD in
   yearly revenue.
 - **No redistribution, no modified versions, and no offering it to others as a
-  product or service.** Download the engine from this repository.
+  product or service.** Get the engine from this project's container image.
 - **Any other commercial use needs a separate license.** Open an issue in this
   repository to get in touch.
 

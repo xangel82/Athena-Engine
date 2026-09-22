@@ -19,16 +19,16 @@ Validated configuration for release 0.2.0.
 | Docker (container release) | 29.2.1 |
 | NVIDIA Container Toolkit | 1.19.1 |
 
-The binary archive uses the CUDA libraries installed on the host. A different
-cuBLAS version can change speed and numerical results; the container image
-pins the validated one.
+Copied out of the image and run without a container, the engine uses the CUDA
+libraries installed on the host. A different cuBLAS version can change speed
+and numerical results; the container itself pins the validated one.
 
 ## Models
 
 The engine runs one model at a time. Model weights are published by their
-authors and are not distributed with the engine; the installer that comes in
-the release archive fetches them, resuming if it is interrupted, and checks
-each file against the checksum its repository publishes.
+authors and are not distributed with the engine; the installer that comes
+with it fetches them, resuming if it is interrupted, and checks each file
+against the checksum its repository publishes.
 
 ### DeepSeek V4 Flash — about 93 GB
 
