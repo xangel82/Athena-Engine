@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.1 - 2026-09-22
+
+### Engine
+
+- Several agents at once. With more conversations than the engine keeps in
+  memory side by side, the turn after a tool result could come back empty:
+  another conversation had taken the worker lane in the meantime, and the
+  engine refilled it but still looked for the tool call it had just lost.
+  It now resumes the conversation from its full history and answers.
+- A client that forces the first call with `tool_choice: "required"` and then
+  switches to `"auto"`, as agents commonly do, gets its answer instead of a
+  409 error. This applies to every model.
+- When a generation is refused, the server log says why.
+
+### Measured on one GB10
+
+Four agents at once on Qwen3.8 Flash Next, 69 tool-calling scenarios
+(tool-eval-bench 2.7.0, `--parallel 4`): **95 out of 100** (64 passed, 3
+partial, 2 failed), against 83 with 0.2.0, with no turn lost to the engine.
+Raw data in `docs/benchmarks/data/tooleval-qwen-parallel4.json`. A single
+conversation is served as in 0.2.0: DeepSeek V4 Flash and Vision-Exp write
+the same text, bit for bit, with and without DSpark.
+
 ## 0.2.0 - 2026-09-22
 
 ### Models

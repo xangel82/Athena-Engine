@@ -160,6 +160,11 @@ from models quantised to two and four bits. Qwen3.8 Flash Next passed 59
 scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
+The same holds with several agents at once. Four conversations in parallel,
+more than the engine keeps in memory side by side, take turns on the same
+worker lanes, and Qwen3.8 Flash Next scores **95 out of 100** on the newer
+tool-eval-bench 2.7.0 run with `--parallel 4`.
+
 The full reports, scenario by scenario, are in
 [docs/benchmarks/data](docs/benchmarks/data).
 
@@ -177,8 +182,8 @@ session is idle, so the answer in progress pays nothing for it.
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.2.0
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.0
+   docker pull ghcr.io/xangel82/athena-engine:0.2.1
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.1
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```

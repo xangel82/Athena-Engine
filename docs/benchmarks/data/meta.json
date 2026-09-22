@@ -21,6 +21,15 @@
       "date": "2026-09-21T21:42:07+0000",
       "commit": "773b63de",
       "binary_md5": "87cc114409b3624bd96d9b78994a5463"
+    },
+    "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4.json)": {
+      "date": "2026-09-22T13:09:27+0000",
+      "commit": "69e4be16",
+      "release": "0.2.1",
+      "binary": "bin/athena-engine of the 0.2.1 release",
+      "binary_md5": "61fb73e8399c2855cf0b8214b5851509",
+      "binary_bytes": 40904320,
+      "tool": "tool-eval-bench 2.7.0 --seed 42 --parallel 4"
     }
   },
   "note": "The two builds differ only in the order of the hyper-connection projection sums, which Qwen does not use; measured side by side, their generation speeds are 0.2-0.4% apart. Tool calling was measured again on the later build because a different summation order makes a model take other paths at near ties."
