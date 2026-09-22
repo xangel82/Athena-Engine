@@ -1,5 +1,4 @@
 {
-  "date": "2026-09-21T21:42:07+0000",
   "host": "single GB10 desktop",
   "gpu": "NVIDIA GB10, 580.159.03",
   "cuda": "Cuda compilation tools, release 13.0, V13.0.88",
@@ -7,8 +6,22 @@
   "cpu": "Cortex-X925",
   "memory_gb": 121.6,
   "binary": "ds4-native-generation-server",
-  "binary_md5": "87cc114409b3624bd96d9b78994a5463",
-  "binary_bytes": 192690808,
-  "commit": "773b63de",
-  "launcher": "athena-engine.sh (Athena-Engine 7086b11)"
+  "binary_md5": "b3e87945b2db2e961b85ebd8c18dfb91",
+  "binary_bytes": 192695664,
+  "commit": "c529b5a9",
+  "launcher": "athena-engine.sh (Athena-Engine 7086b11)",
+  "date": "2026-09-22T06:57:06+0000",
+  "measurements": {
+    "tool calling, DeepSeek V4 Flash and Vision-Exp": {
+      "date": "2026-09-22T06:57:06+0000",
+      "commit": "c529b5a9",
+      "binary_md5": "b3e87945b2db2e961b85ebd8c18dfb91"
+    },
+    "prefill, generation, restore, image cost, and tool calling for Qwen3.8 Flash Next": {
+      "date": "2026-09-21T21:42:07+0000",
+      "commit": "773b63de",
+      "binary_md5": "87cc114409b3624bd96d9b78994a5463"
+    }
+  },
+  "note": "The two builds differ only in the order of the hyper-connection projection sums, which Qwen does not use; measured side by side, their generation speeds are 0.2-0.4% apart. Tool calling was measured again on the later build because a different summation order makes a model take other paths at near ties."
 }

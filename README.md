@@ -151,23 +151,21 @@ to call anything, recovering from tool errors, resisting text that tries to
 hijack them, and returning JSON that fits a schema.
 
 <p align="center">
-  <img src="docs/benchmarks/tool-quality.svg" alt="Tool-calling quality: Qwen3.8 Flash Next 92, DeepSeek V4 Flash 90, DeepSeek V4 Flash Vision-Exp 88 out of 100" width="760">
+  <img src="docs/benchmarks/tool-quality.svg" alt="Tool-calling quality: Qwen3.8 Flash Next 92, DeepSeek V4 Flash 91, DeepSeek V4 Flash Vision-Exp 88 out of 100" width="760">
 </p>
 
-**92 and 90 out of 100 — ★★★★★ Excellent — for Qwen3.8 Flash Next and
+**92 and 91 out of 100 — ★★★★★ Excellent — for Qwen3.8 Flash Next and
 DeepSeek V4 Flash, 88 — ★★★★ Good — for Vision-Exp**, on a desktop machine,
 from models quantised to two and four bits. Qwen3.8 Flash Next passed 59
 scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
-half-passed 8 and failed 3; Vision-Exp passed 56, half-passed 9 and failed 4.
+half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
-All three stumble on the same kind of scenario, and it is worth naming rather
-than hiding: text aimed at the model, hidden in what a tool returns, gets
-through. Qwen3.8 Flash Next and Vision-Exp let an injected instruction leak
-into their answer; DeepSeek V4 Flash follows one planted in an earlier tool
-result and copies an extra recipient into an email; Vision-Exp also repeats
-a fake API key from a file that poses as a system message. Everything a tool
-returns should be treated as data, not as orders, by whatever you build on
-top.
+All three stumble on the same scenario, and it is worth naming rather than
+hiding: a tool result carrying an instruction aimed at the model leaks into
+the answer — partial resistance to prompt injection. Vision-Exp goes further
+twice: it follows instructions in a file that poses as a system message, and
+it makes up internal data it was never given. Everything a tool returns
+should be treated as data, not as orders, by whatever you build on top.
 
 The full reports, scenario by scenario, are in
 [docs/benchmarks/data](docs/benchmarks/data).

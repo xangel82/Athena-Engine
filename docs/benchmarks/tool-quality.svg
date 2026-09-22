@@ -2,7 +2,7 @@
 <rect x='0.5' y='0.5' width='759' height='429' rx='14' fill='#ffffff' stroke='#dfe3ea'/>
 <text x='34' y='38' font-size='18' font-weight='700' fill='#111827'>Tool-calling quality</text>
 <text x='34' y='60' font-size='12.5' fill='#6b7280'>69 deterministic scenarios across 15 categories, scored pass / partial / fail</text>
-<text x='34' y='412' font-size='11' fill='#6b7280'>GB10, 128 GB unified memory, one request at a time, 2026-09-21</text>
+<text x='34' y='412' font-size='11' fill='#6b7280'>GB10, 128 GB unified memory, one request at a time, 2026-09-21 and 2026-09-22</text>
 <text x='34' y='84' font-size='14' font-weight='600' fill='#111827'>Qwen3.8-Flash-Next</text>
 <text x='732' y='84' font-size='14' font-weight='700' text-anchor='end' fill='#111827'>92 / 100 &#160;★★★★★&#160;Excellent</text>
 <rect x='34.0' y='92' width='596.8' height='40' fill='#16a34a'/>
@@ -13,14 +13,14 @@
 <rect x='34.5' y='92.5' width='697' height='39' fill='none' stroke='#dfe3ea' rx='6'/>
 <text x='34' y='152' font-size='12' fill='#6b7280'>59 passed &#183; 9 partial &#183; 1 failed &#183; 69 scenarios</text>
 <text x='34' y='182' font-size='14' font-weight='600' fill='#111827'>DeepSeek-V4-Flash</text>
-<text x='732' y='182' font-size='14' font-weight='700' text-anchor='end' fill='#111827'>90 / 100 &#160;★★★★★&#160;Excellent</text>
+<text x='732' y='182' font-size='14' font-weight='700' text-anchor='end' fill='#111827'>91 / 100 &#160;★★★★★&#160;Excellent</text>
 <rect x='34.0' y='190' width='586.7' height='40' fill='#16a34a'/>
 <text x='327.4' y='215.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>58</text>
-<rect x='620.7' y='190' width='80.9' height='40' fill='#f59e0b'/>
-<text x='661.2' y='215.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>8</text>
-<rect x='701.7' y='190' width='30.3' height='40' fill='#cbd5e1'/>
+<rect x='620.7' y='190' width='91.0' height='40' fill='#f59e0b'/>
+<text x='666.2' y='215.0' font-size='13' font-weight='600' text-anchor='middle' fill='#ffffff'>9</text>
+<rect x='711.8' y='190' width='20.2' height='40' fill='#cbd5e1'/>
 <rect x='34.5' y='190.5' width='697' height='39' fill='none' stroke='#dfe3ea' rx='6'/>
-<text x='34' y='250' font-size='12' fill='#6b7280'>58 passed &#183; 8 partial &#183; 3 failed &#183; 69 scenarios</text>
+<text x='34' y='250' font-size='12' fill='#6b7280'>58 passed &#183; 9 partial &#183; 2 failed &#183; 69 scenarios</text>
 <text x='34' y='280' font-size='14' font-weight='600' fill='#111827'>DeepSeek-V4-Flash-Vision-Exp</text>
 <text x='732' y='280' font-size='14' font-weight='700' text-anchor='end' fill='#111827'>88 / 100 &#160;★★★★&#160;Good</text>
 <rect x='34.0' y='288' width='566.5' height='40' fill='#16a34a'/>
