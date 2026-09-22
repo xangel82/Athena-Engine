@@ -2,11 +2,11 @@
 # Set ATHENA_MODELS_DIR to the folder with the model files:
 #   ATHENA_MODELS_DIR=/path/to/models docker compose up -d
 #
-# The image is set up for DeepSeek V4 Flash.  To run Qwen3.8 Flash Next
-# instead, uncomment the environment block below.
+# The image is set up for DeepSeek V4 Flash.  To run another model, or
+# several, uncomment one of the environment blocks below.
 services:
   athena-engine:
-    image: ghcr.io/xangel82/athena-engine:0.1.0
+    image: ghcr.io/xangel82/athena-engine:0.2.0
     container_name: athena-engine
     restart: unless-stopped
     ports:

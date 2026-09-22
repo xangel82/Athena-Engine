@@ -1,6 +1,55 @@
 # Changelog
 
-## 0.1.0 - unreleased
+## 0.2.0 - unreleased
+
+### Models
+
+- DeepSeek V4 Flash Vision-Exp, the DeepSeek checkpoint that reads images,
+  with the DSpark drafter and the image encoder published beside it. On text
+  it scores a little below DeepSeek V4 Flash, so the two are best installed
+  side by side.
+- Any of the three models, or several. With more than one in place a
+  conversation replaces the one that is running by writing `%switch qwen`,
+  `%switch deepseek` or `%switch visio`; each name is the checkpoint it loads.
+  `install.sh --model all` puts all three in place, and `--model` also takes
+  a list such as `deepseek,visio`, the first being the one that starts.
+
+### Engine
+
+- Pictures in DeepSeek conversations the way the model was trained on them:
+  image tokens are routed to the experts with their own router biases and
+  attend to each other across the whole picture.
+- A conversation with pictures is not read twice: the text before the first
+  picture is resumed from the cache, and so is everything past a picture the
+  request carries again, byte for byte. Both models that read images do this.
+- The image encoder's attention runs as one fused kernel: a picture adds
+  about 0.7 seconds to the first token with Vision-Exp and 0.9 to 1.3
+  seconds with Qwen3.8 Flash Next, a full-size screenshot included.
+- DeepSeek V4 Flash generates 6 to 7% faster with the same output, bit for
+  bit: the hyper-connection projection and the one-token Q8 projections read
+  their weights at close to the memory's speed.
+- The weights of a model start on a 4096-byte boundary on the device,
+  whatever the layout of its file: Vision-Exp generates as fast as DeepSeek
+  V4 Flash, where it was 8% slower.
+
+### Measured on one GB10
+
+One request at a time, each model in the configuration the launcher ships:
+the full 262,144-token context, KV checkpoints on disk, and the model's own
+draft. Raw data in `docs/benchmarks/data`.
+
+| Workload | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
+|---|---|---|---|
+| Prefill, 8k-token prompt | 1,171 tokens/s | 1,127 tokens/s | 1,086 tokens/s |
+| Prefill, 128k-token prompt | 1,075 tokens/s | 1,044 tokens/s | 1,018 tokens/s |
+| Prefill, 256k-token prompt | 995 tokens/s | 919 tokens/s | 962 tokens/s |
+| Decode, 8k context | 22.5 tokens/s | 16.6 tokens/s | 32.4 tokens/s |
+| Decode, 128k context | 21.4 tokens/s | 24.3 tokens/s | 31.0 tokens/s |
+| Decode, 256k context | 19.6 tokens/s | 21.1 tokens/s | 32.2 tokens/s |
+| Restoring a 141,519-token conversation from disk | 1.7 s | | |
+| Tool calling, 69 scenarios | 91 / 100 | 88 / 100 | 92 / 100 |
+
+## 0.1.0 - 2026-09-19
 
 First binary release for NVIDIA GB10.
 
@@ -11,15 +60,11 @@ First binary release for NVIDIA GB10.
 - Qwen3.8 Flash Next (Unsloth UD-IQ4_XS) with context up to 262,144 tokens and
   speculative decoding through its MTP head. It reads images and PDF pages
   when a projector is given to it.
-- DeepSeek V4 Flash Vision-Exp, the DeepSeek checkpoint that reads images,
-  with the DSpark drafter and the image encoder published beside it.
-- Any of the three, or several. With more than one in place a conversation
-  replaces the one that is running by writing `%switch qwen`,
-  `%switch deepseek` or `%switch visio`: the engine drains what it is
+- Either model, or both. With both in place a conversation replaces the one
+  that is running by writing `%switch deepseek`: the engine drains what it is
   serving, releases the model, loads the other and answers from it, reporting
   each step as it happens. The engine never stops, and if the new model
-  cannot be loaded the previous one comes back. `install.sh --model all`
-  puts all three in place.
+  cannot be loaded the previous one comes back.
 
 ### Engine
 
