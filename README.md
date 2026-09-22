@@ -160,13 +160,6 @@ from models quantised to two and four bits. Qwen3.8 Flash Next passed 59
 scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
-All three stumble on the same scenario, and it is worth naming rather than
-hiding: a tool result carrying an instruction aimed at the model leaks into
-the answer — partial resistance to prompt injection. Vision-Exp goes further
-twice: it follows instructions in a file that poses as a system message, and
-it makes up internal data it was never given. Everything a tool returns
-should be treated as data, not as orders, by whatever you build on top.
-
 The full reports, scenario by scenario, are in
 [docs/benchmarks/data](docs/benchmarks/data).
 
