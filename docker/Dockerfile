@@ -32,9 +32,14 @@ ADD ${ATHENA_PACKAGE} /opt/
 #   ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
 #   ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
 #   ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf       (to answer about images)
-# Naming a second model as well — ATHENA_MODEL_2, ATHENA_DRAFT_2 — makes the
-# container switchable: a conversation writes "%switch qwen" or
-# "%switch deepseek" and the engine loads the other one.
+# For DeepSeek V4 Flash Vision-Exp, the DeepSeek that reads images:
+#   ATHENA_MODEL=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
+#   ATHENA_DRAFT=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
+#   ATHENA_MMPROJ=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
+# Naming more models as well — ATHENA_MODEL_2 and ATHENA_MODEL_3, each with
+# its ATHENA_DRAFT_ and ATHENA_MMPROJ_ — makes the container switchable: a
+# conversation writes "%switch qwen", "%switch deepseek" or "%switch visio"
+# and the engine loads that one.
 ENV ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf \
     ATHENA_DRAFT=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf \
     ATHENA_KV_DIR=/kv \

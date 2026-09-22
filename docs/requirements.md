@@ -48,6 +48,23 @@ shards that carry the draft layers, published by DeepSeek at
 (about 10 GB, downloaded once and quantised to 5.6 GB). Without the sidecar
 DeepSeek V4 Flash runs perfectly well, only without speculative decoding.
 
+### DeepSeek V4 Flash Vision-Exp — about 94 GB
+
+DeepSeek's experimental checkpoint that reads images,
+[deepseek-ai/DeepSeek-V4-Flash-Vision-Exp](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp),
+quantised the same way as the model above. From
+[antirez/deepseek-v4-gguf](https://huggingface.co/antirez/deepseek-v4-gguf):
+
+| File | Role |
+|---|---|
+| `DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf` | target model |
+| `DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf` | DSpark drafter (speculative decoding) |
+| `DeepSeek-V4-Flash-Vision-Encoder.gguf` | vision encoder — without it the model answers text only |
+
+All three are published as files, so nothing is built on the machine. The
+encoder belongs to this checkpoint only; the launcher refuses it beside the
+model above.
+
 ### Qwen3.8 Flash Next — about 97 GB
 
 From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF):
@@ -59,4 +76,4 @@ From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Fl
 | `mmproj-F16.gguf` | vision encoder — without it the model answers text only |
 
 The engine reads the model family from the file, so the launcher needs no
-flag to tell the two apart.
+flag to tell the three apart.
