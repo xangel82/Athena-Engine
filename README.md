@@ -362,7 +362,13 @@ It starts DeepSeek V4 Flash. The `environment:` block in
 `docker/docker-compose.yml` chooses what runs: Qwen3.8 Flash Next or
 Vision-Exp instead, or all three, and then the container answers `%switch`
 like any other deployment. Two named volumes keep what should outlive the container:
-`/kv`, where conversations are checkpointed, and `/state`. The container
+`/kv`, where conversations are checkpointed, and `/state`. If you mount a
+directory of your own at `/kv` instead, it must belong to root, the user the
+engine runs as in the container: checkpoints carry what your conversations
+said, so the engine closes its directory to everyone else and refuses one
+that another user owns, keeping the cache off and saying so in its log
+(`DURABLE_KV off`). A path that does not exist yet is created by Docker the
+right way. The container
 needs the NVIDIA runtime and all GPUs (`--gpus all`), and `memlock`
 unlimited.
 
