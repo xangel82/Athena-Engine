@@ -1,6 +1,6 @@
 # Requirements
 
-Validated configuration for release 0.2.2.
+Validated configuration for release 0.2.3.
 
 ## Hardware
 

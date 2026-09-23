@@ -181,8 +181,8 @@ session is idle, so the answer in progress pays nothing for it.
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.2.2
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.2
+   docker pull ghcr.io/xangel82/athena-engine:0.2.3
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.3
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```

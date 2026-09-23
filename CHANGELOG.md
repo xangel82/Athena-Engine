@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.3 - 2026-09-23
+
+### Engine
+
+- An agent that asks for a longer answer than the engine will generate now
+  gets an answer. Several agent harnesses derive `max_tokens` from the
+  context window a model advertises and send it whole, so a request for
+  256,000 tokens arrives with a 10,000-token prompt; the engine used to
+  refuse every one of them, and a tool like the DeepSeek Harness could not
+  hold a single conversation. It now serves what fits, as the OpenAI API
+  does: the smaller of what was asked for, what the engine generates per
+  request, and the room the prompt leaves. A request that asks for less than
+  that still gets exactly what it asked for.
+
+  Three things are still refused, because none can be made to fit: asking
+  for no tokens at all, a prompt longer than the context, and a prompt that
+  fills the context to its last token and leaves no answer to shorten.
+
 ## 0.2.2 - 2026-09-23
 
 ### Engine
