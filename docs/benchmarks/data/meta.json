@@ -22,6 +22,15 @@
       "commit": "773b63de",
       "binary_md5": "87cc114409b3624bd96d9b78994a5463"
     },
+    "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.2.2.json)": {
+      "date": "2026-09-23T15:13:11+0000",
+      "commit": "4a340fe1",
+      "release": "0.2.2",
+      "binary": "bin/athena-engine of the 0.2.2 release",
+      "binary_md5": "46e4204cc4386f00b920722564595420",
+      "binary_bytes": 40969856,
+      "tool": "tool-eval-bench 2.7.0 --seed 42 --parallel 4"
+    },
     "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4.json)": {
       "date": "2026-09-22T13:09:27+0000",
       "commit": "69e4be16",

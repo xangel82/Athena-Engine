@@ -6,7 +6,7 @@
 # several, uncomment one of the environment blocks below.
 services:
   athena-engine:
-    image: ghcr.io/xangel82/athena-engine:0.2.1
+    image: ghcr.io/xangel82/athena-engine:0.2.2
     container_name: athena-engine
     restart: unless-stopped
     ports:

@@ -1,5 +1,51 @@
 # Changelog
 
+## 0.2.2 - 2026-09-23
+
+### Engine
+
+- More conversations at once, and each of them faster. How many the engine
+  holds side by side is no longer three numbers written by hand: the engine
+  asks its own memory ledger what a lane costs and how much is left. On a
+  GB10 that is fifteen lanes where it was three.
+- Nobody waits behind anybody. Eight conversations arriving together used to
+  be served three at a time, five of them queued for twenty-four to
+  fifty-nine seconds; they now all start within nine seconds and decode at
+  the same rate instead of one racing while the others wait.
+- A shared pass carries every conversation the engine's tables hold — eight
+  lanes, forty-eight rows — so the conversations that used to spill out into
+  a pass of their own ride along instead.
+- Conversations waiting for a turn now leave a shared pass together and wait
+  the same window, so they meet in one pass rather than splitting into two
+  sets that alternate.
+- The engine asks its draft head for two tokens instead of four: the drafts
+  it throws away cost more than the ones it keeps. `ATHENA_LANE_DRAFTS`
+  sweeps that choice again on another machine.
+- A lane the machine refuses to open, for want of memory that instant, no
+  longer costs the pool a place for the life of the process.
+- When more conversations ask for a turn than the model verifies in one
+  pass, the ones that do not fit are carried in the pass that follows. They
+  used to be turned away together, and a conversation turned away finished
+  its answer on the slower path.
+
+### Measured on one GB10
+
+Eight conversations at once on Qwen3.8 Flash Next: **27.8 to 39.9 tokens/s**
+together, and every one of the eight decodes at 5.0 to 5.4 tokens/s instead
+of one racing at 25.8 while another crawls at 10.6.
+
+Four agents at once, the same tool-eval-bench 2.7.0 run with `--seed 42
+--parallel 4` that 0.2.1 published, finishes in **15 minutes instead of 82**
+and scores **94 out of 100** against 95. The two runs differ by a single
+scenario, and the same unchanged binary has scored 94 and 95 on different
+runs. Raw data in
+`docs/benchmarks/data/tooleval-qwen-parallel4-0.2.2.json`.
+
+The answers do not change: a 19,053-token conversation hashes
+7ec778311d103a80 before and after every change here, two conversations at
+temperature 0 give the same text together as alone, and DeepSeek V4 Flash
+and Vision-Exp write the same text, bit for bit, with and without DSpark.
+
 ## 0.2.1 - 2026-09-22
 
 ### Engine
