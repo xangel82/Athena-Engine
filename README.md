@@ -98,17 +98,17 @@ they were taken on, are in [docs/benchmarks/data](docs/benchmarks/data).
 </p>
 
 The prefill phase as the server times it, on a fresh prompt nobody has asked
-before. Between 8k and 256k tokens the rate falls by 11 to 18 per cent —
+before. Between 8k and 256k tokens the rate falls by 9 to 18 per cent —
 thirty-two times the context for at most a sixth of the speed.
 
 | Prompt | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
 |---|---|---|---|
-| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,086 tokens/s |
-| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,072 tokens/s |
-| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,051 tokens/s |
-| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,018 tokens/s |
-| 196k | 1,025 tokens/s | 998 tokens/s | 992 tokens/s |
-| 256k | 995 tokens/s | 919 tokens/s | 962 tokens/s |
+| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,080 tokens/s |
+| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,063 tokens/s |
+| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,052 tokens/s |
+| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,034 tokens/s |
+| 196k | 1,025 tokens/s | 998 tokens/s | 1,013 tokens/s |
+| 256k | 995 tokens/s | 919 tokens/s | 985 tokens/s |
 
 A quarter of a million tokens — a 700-page book — is read in less than five
 minutes.
@@ -126,12 +126,12 @@ between neighbouring points is the run-to-run variation, not a trend.
 
 | Context | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
 |---|---|---|---|
-| 8k | 22.5 tokens/s | 16.6 tokens/s | 32.4 tokens/s |
-| 32k | 20.3 tokens/s | 19.0 tokens/s | 35.8 tokens/s |
-| 64k | 19.8 tokens/s | 24.2 tokens/s | 31.8 tokens/s |
-| 128k | 21.4 tokens/s | 24.3 tokens/s | 31.0 tokens/s |
-| 196k | 19.2 tokens/s | 18.3 tokens/s | 31.0 tokens/s |
-| 256k | 19.6 tokens/s | 21.1 tokens/s | 32.2 tokens/s |
+| 8k | 22.5 tokens/s | 16.6 tokens/s | 33.8 tokens/s |
+| 32k | 20.3 tokens/s | 19.0 tokens/s | 34.5 tokens/s |
+| 64k | 19.8 tokens/s | 24.2 tokens/s | 32.9 tokens/s |
+| 128k | 21.4 tokens/s | 24.3 tokens/s | 31.9 tokens/s |
+| 196k | 19.2 tokens/s | 18.3 tokens/s | 30.8 tokens/s |
+| 256k | 19.6 tokens/s | 21.1 tokens/s | 31.6 tokens/s |
 
 Qwen is the fastest because it is the smallest model; DeepSeek V4 Flash
 answers at a steady twenty tokens a second whether the conversation holds
@@ -161,7 +161,7 @@ scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
 The same holds with several agents at once. Four conversations in parallel,
-each with a worker lane of its own, and Qwen3.8 Flash Next scores **94 out
+each with a worker lane of its own, and Qwen3.8 Flash Next scores **93 out
 of 100** on the tool-eval-bench 2.7.0 run with `--parallel 4`.
 
 The full reports, scenario by scenario, are in
@@ -181,8 +181,8 @@ session is idle, so the answer in progress pays nothing for it.
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.2.3
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.3
+   docker pull ghcr.io/xangel82/athena-engine:0.2.4
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.4
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```

@@ -17,10 +17,38 @@
       "commit": "c529b5a9",
       "binary_md5": "b3e87945b2db2e961b85ebd8c18dfb91"
     },
-    "prefill, generation, restore, image cost, and tool calling for Qwen3.8 Flash Next": {
+    "restore, image cost, and tool calling for Qwen3.8 Flash Next": {
       "date": "2026-09-21T21:42:07+0000",
       "commit": "773b63de",
       "binary_md5": "87cc114409b3624bd96d9b78994a5463"
+    },
+    "prefill for Qwen3.8 Flash Next": {
+      "date": "2026-09-27T13:49:37+0000",
+      "commit": "287eaf64",
+      "release": "0.2.4",
+      "binary": "bin/athena-engine of the 0.2.4 release",
+      "binary_md5": "654b1afb65441b09da92bed3b09195da",
+      "binary_bytes": 41495568,
+      "launcher": "athena-engine.sh of the 0.2.4 release, MTP head and vision encoder loaded",
+      "method": "two throw-away 8k prompts first, so the lanes are warm: a lane's first prompt pays its activation and first growth (8k reads at ~1020 tokens/s cold, ~1075 warm)"
+    },
+    "generation for Qwen3.8 Flash Next": {
+      "date": "2026-09-27T13:15:00+0000",
+      "commit": "287eaf64",
+      "release": "0.2.4",
+      "binary": "bin/athena-engine of the 0.2.4 release",
+      "binary_md5": "654b1afb65441b09da92bed3b09195da",
+      "binary_bytes": 41495568,
+      "launcher": "athena-engine.sh of the 0.2.4 release, MTP head and vision encoder loaded"
+    },
+    "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.2.4.json)": {
+      "date": "2026-09-27T13:30:10+0000",
+      "commit": "287eaf64",
+      "release": "0.2.4",
+      "binary": "bin/athena-engine of the 0.2.4 release",
+      "binary_md5": "654b1afb65441b09da92bed3b09195da",
+      "binary_bytes": 41495568,
+      "tool": "tool-eval-bench 2.7.0 --seed 42 --parallel 4"
     },
     "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.2.2.json)": {
       "date": "2026-09-23T15:13:11+0000",

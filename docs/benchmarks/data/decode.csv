@@ -11,9 +11,9 @@ DeepSeek-V4-Flash-Vision-Exp,decode,default,64k,63948,256,24.18
 DeepSeek-V4-Flash-Vision-Exp,decode,default,128k,127981,256,24.33
 DeepSeek-V4-Flash-Vision-Exp,decode,default,196k,196114,256,18.27
 DeepSeek-V4-Flash-Vision-Exp,decode,default,256k,256197,256,21.14
-Qwen3.8-Flash-Next,decode,default,8k,7986,256,32.42
-Qwen3.8-Flash-Next,decode,default,32k,31958,256,35.83
-Qwen3.8-Flash-Next,decode,default,64k,63982,256,31.75
-Qwen3.8-Flash-Next,decode,default,128k,128071,256,30.99
-Qwen3.8-Flash-Next,decode,default,196k,196207,256,30.96
-Qwen3.8-Flash-Next,decode,default,256k,256290,256,32.18
+Qwen3.8-Flash-Next,decode,default,8k,7758,256,33.83
+Qwen3.8-Flash-Next,decode,default,32k,31426,256,34.5
+Qwen3.8-Flash-Next,decode,default,64k,63036,256,32.9
+Qwen3.8-Flash-Next,decode,default,128k,124784,256,31.85
+Qwen3.8-Flash-Next,decode,default,196k,191452,256,30.84
+Qwen3.8-Flash-Next,decode,default,256k,249181,256,31.63

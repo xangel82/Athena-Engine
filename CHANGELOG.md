@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.2.4 - 2026-09-27
+
+### Engine
+
+- Qwen3.8 Flash Next writes faster. A token used to reach the GPU as some
+  2,250 separate launches, and on the many that finish in a few microseconds
+  the GPU sat idle waiting for the next one. A decoding step, and the check
+  of the tokens the MTP head proposes, is now recorded once as a CUDA graph
+  and replayed whole.
+- The layers every token reads in full now live in the GPU's own memory. The
+  engine maps the model file and lets the GPU read it in place, which on a
+  GB10 costs about a quarter of the memory bandwidth. Qwen's dense layers,
+  4.7 GB of the 94, are moved into memory the GPU owns; the experts, of
+  which a token touches two per cent, stay where they are. Moved, not
+  copied: the engine holds the memory it held before, keeps the same number
+  of conversations side by side and still reads a full 262,144-token
+  context. The first token of a short prompt arrives a third sooner,
+  because reading a prompt goes through the same layers.
+
+DeepSeek V4 Flash and Vision-Exp are unchanged.
+
+### Measured on one GB10
+
+Qwen3.8 Flash Next on a short prompt, with the MTP head as it is served:
+**36.0 tokens/s instead of 32.4**, first token in 543 ms instead of 816.
+Without the MTP head, 25.5 instead of 20.6. After an 8,000-token prompt,
+33.8 instead of 30.3. Each pair measured the same day, with the same
+launcher, against 0.2.3.
+
+Reading a prompt is as fast as it was: 985 tokens/s at 249,000 tokens,
+and fifteen conversations side by side, as in 0.2.3.
+
+The answers do not change. Qwen3.8 Flash Next writes the same text as
+0.2.3, bit for bit, with and without the MTP head, and DeepSeek V4 Flash
+and Vision-Exp keep the hashes every release is checked against. Four
+agents at once on the tool-eval-bench 2.7.0 run with `--seed 42
+--parallel 4` score **93 out of 100** in 15 minutes; 0.2.2 scored 94, and
+the two runs differ by a single scenario, TC-62, half-passed here. Raw
+data in `docs/benchmarks/data/tooleval-qwen-parallel4-0.2.4.json`.
+
 ## 0.2.3 - 2026-09-23
 
 ### Engine
