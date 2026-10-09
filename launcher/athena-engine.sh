@@ -13,16 +13,19 @@
 #   ATHENA_IMAGE_TOKENS   budget per image        (default 1024)
 #   ATHENA_MODEL_2        a second model the engine can be told to load
 #                         while it runs, by writing "%switch <name>" in a
-#                         conversation: qwen, deepseek, or visio for
-#                         DeepSeek with its vision encoder
+#                         conversation: qwen, deepseek, visio for DeepSeek
+#                         with its vision encoder, or deepseek4.1 for
+#                         DeepSeek V4.1 Flash, which is larger than the
+#                         machine and streams its experts from the SSD
 #   ATHENA_DRAFT_2        its speculative decoding head
 #   ATHENA_MMPROJ_2       its vision encoder, if it has one
 #   ATHENA_MODEL_3        a third one, with ATHENA_DRAFT_3 and ATHENA_MMPROJ_3
 #   ATHENA_API_MODEL      athena (default): serve the model as "Athena";
 #                         model: serve it by its family name
 #   ATHENA_MODEL_NAME     serve this exact name instead of either
-#   ATHENA_MODEL_FAMILY   deepseek-v4-flash, deepseek-v4-flash-vision or
-#                         qwen3.8-flash-next (default: read from the model file)
+#   ATHENA_MODEL_FAMILY   deepseek-v4-flash, deepseek-v4-flash-vision,
+#                         deepseek-v4.1-flash or qwen3.8-flash-next
+#                         (default: read from the model file)
 #   ATHENA_BIND           listen address          (default 0.0.0.0)
 #   ATHENA_PORT           listen port             (default 30007)
 #   ATHENA_CONTEXT        context length          (default 262144)
@@ -50,8 +53,9 @@ model="${ATHENA_MODEL:-}"
 # lengths blanked out.
 model_family() {
   local path="$1" arch variant
-  arch="$(head -c 65536 "$path" | LC_ALL=C grep -a -o -E 'deepseek4|qwen4exp' | head -n 1 || true)"
+  arch="$(head -c 65536 "$path" | LC_ALL=C grep -a -o -E 'deepseek41|deepseek4|qwen4exp' | head -n 1 || true)"
   case "$arch" in
+    deepseek41) echo deepseek-v4.1-flash ;;
     deepseek4)
       variant="$(head -c 16777216 "$path" | LC_ALL=C tr '\000-\037' ' ' |
                  LC_ALL=C grep -a -o -E 'deepseek4\.checkpoint_variant +[a-z0-9-]+' |
@@ -73,25 +77,45 @@ if [ -z "$family" ]; then
   [ -n "$family" ] || fail "cannot tell the model family of $model; set ATHENA_MODEL_FAMILY"
 fi
 
+# A model larger than the machine streams its experts from the SSD: the
+# server is started with --ssd-streaming whenever one of its models is one,
+# and every model that fits still loads as it always has (the engine decides
+# per model, at each load).
+streams=0
+# The context every model is served with, but V4.1's: it stops at what its
+# candidate layer covers (16384 tokens) until that layer's block selection
+# exists, and the engine refuses more rather than answer from rows the model
+# never sees.  Each model registered for "%switch" carries its own.
+server_context="${ATHENA_CONTEXT:-262144}"
+v41_context="${ATHENA_V41_CONTEXT:-16384}"
+context="$server_context"
 case "$family" in
   deepseek-v4-flash|deepseek-v4-flash-vision)
     draft_flag=--sidecar
     residency="${ATHENA_RESIDENCY:-device}"
     kv_capacity="${ATHENA_KV_CAPACITY:-8192}"
     ;;
+  deepseek-v4.1-flash)
+    # No draft head: V4.1 ships neither a DSpark sidecar nor an MTP layer.
+    draft_flag=
+    residency="${ATHENA_RESIDENCY:-mapped}"
+    context="$v41_context"
+    kv_capacity="$v41_context"
+    streams=1
+    ;;
   qwen3.8-flash-next)
     draft_flag=--mtp
     residency="${ATHENA_RESIDENCY:-mapped}"
     kv_capacity="${ATHENA_KV_CAPACITY:-}"
     ;;
-  *) fail "unsupported model family: $family (deepseek-v4-flash, deepseek-v4-flash-vision or qwen3.8-flash-next)" ;;
+  *) fail "unsupported model family: $family (deepseek-v4-flash, deepseek-v4-flash-vision, deepseek-v4.1-flash or qwen3.8-flash-next)" ;;
 esac
 
 args=(--model "$model"
       --model-family "$family"
       --bind "${ATHENA_BIND:-0.0.0.0}"
       --port "${ATHENA_PORT:-30007}"
-      --context "${ATHENA_CONTEXT:-262144}"
+      --context "$context"
       --tokens "${ATHENA_MAX_TOKENS:-16384}"
       --model-residency "$residency"
       --warm-weights "$(test "$residency" = mapped && echo on || echo off)")
@@ -108,6 +132,7 @@ else
 fi
 
 if [ -n "${ATHENA_DRAFT:-}" ]; then
+  [ -n "$draft_flag" ] || fail "ATHENA_DRAFT: $family takes no draft head"
   [ -r "$ATHENA_DRAFT" ] || fail "draft head is not readable: $ATHENA_DRAFT"
   args+=("$draft_flag" "$ATHENA_DRAFT")
 fi
@@ -127,10 +152,11 @@ fi
 
 # More than one model makes the engine switchable: all of them are
 # registered, and a conversation can ask for any with "%switch <name>".  The
-# name says which checkpoint answers: qwen, deepseek, or visio for DeepSeek
-# V4 Flash Vision-Exp.  Each family keeps the deployment it wants — DeepSeek
-# device-resident with its small KV ring, Qwen mapped with the whole
-# context — because a switch changes the model, not the machine it runs on.
+# name says which checkpoint answers: qwen, deepseek, visio for DeepSeek V4
+# Flash Vision-Exp, or deepseek4.1 for DeepSeek V4.1 Flash.  Each family
+# keeps the deployment it wants — DeepSeek V4 device-resident with its small
+# KV ring, Qwen mapped with the whole context, V4.1 mapped and streamed from
+# the SSD — because a switch changes the model, not the machine it runs on.
 registered=" "
 register_model() {  # model, draft, mmproj
   local path="$1" draft="${2:-}" mmproj="${3:-}"
@@ -139,11 +165,17 @@ register_model() {  # model, draft, mmproj
   case "$fam" in
     deepseek-v4-flash) name=deepseek ;;
     deepseek-v4-flash-vision) name=visio ;;
+    deepseek-v4.1-flash) name=deepseek4.1 ;;
     qwen3.8-flash-next) name=qwen ;;
     *) fail "cannot tell the model family of $path" ;;
   esac
   [ "$fam" != deepseek-v4-flash ] || [ -z "$mmproj" ] ||
     fail "$path reads no images; its vision encoder belongs to Vision-Exp"
+  if [ "$fam" = deepseek-v4.1-flash ]; then
+    [ -z "$draft" ] || fail "$path takes no draft head"
+    [ -z "$mmproj" ] || fail "$path reads no images"
+    streams=1
+  fi
   case "$registered" in
     *" $name "*) fail "two models would both answer to \"%switch $name\"" ;;
   esac
@@ -151,11 +183,13 @@ register_model() {  # model, draft, mmproj
   [ -z "$draft" ] || [ -r "$draft" ] || fail "draft head is not readable: $draft"
   [ -z "$mmproj" ] || [ -r "$mmproj" ] || fail "vision encoder is not readable: $mmproj"
   entry="$name=$path,family=$fam"
-  if [ "$fam" != qwen3.8-flash-next ]; then
-    entry="$entry,residency=device,kv=${ATHENA_KV_CAPACITY:-8192}"
+  if [ "$fam" = deepseek-v4.1-flash ]; then
+    entry="$entry,residency=mapped,kv=$v41_context,context=$v41_context"
+  elif [ "$fam" != qwen3.8-flash-next ]; then
+    entry="$entry,residency=device,kv=${ATHENA_KV_CAPACITY:-8192},context=$server_context"
     [ -n "$draft" ] && entry="$entry,draft=$draft"
   else
-    entry="$entry,residency=mapped"
+    entry="$entry,residency=mapped,context=$server_context"
     [ -n "$draft" ] && entry="$entry,mtp=$draft"
   fi
   [ -n "$mmproj" ] && entry="$entry,mmproj=$mmproj"
@@ -172,6 +206,8 @@ if [ -n "${ATHENA_MODEL_2:-}${ATHENA_MODEL_3:-}" ]; then
     register_model "$path" "${!draft_var:-}" "${!mmproj_var:-}"
   done
 fi
+
+[ "$streams" = 0 ] || args+=(--ssd-streaming)
 
 kv_dir="${ATHENA_KV_DIR-$HOME/.cache/athena-engine/kv}"
 if [ -n "$kv_dir" ]; then
