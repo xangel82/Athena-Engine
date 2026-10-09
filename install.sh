@@ -6,6 +6,7 @@
 #   ./install.sh --model both                Qwen and DeepSeek; %switch picks in chat
 #   ./install.sh --model all                 Qwen, DeepSeek and DeepSeek Vision-Exp
 #   ./install.sh --model deepseek,visio      any list; the first is the one that starts
+#   ./install.sh --model qwen,deepseek4.1    DeepSeek V4.1 Flash, 366 GB, only when named
 #   ./install.sh --model qwen --dir /data/models
 #   ./install.sh --model qwen --from /mnt/ggufs      use files already here
 #   ./install.sh --model deepseek --verify           check what is already there
@@ -48,7 +49,7 @@ while [ $# -gt 0 ]; do
     --from) FROM_DIR="${2:-}"; shift 2 ;;
     --verify) VERIFY=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
-    -h|--help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -67,6 +68,8 @@ DSPARK_FILE="DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf"
 VISION_MODEL="DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf"
 VISION_DRAFT="DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf"
 VISION_ENCODER="DeepSeek-V4-Flash-Vision-Encoder.gguf"
+DEEPSEEK41_REPO="$HF/antirez/deepseek-v4.1-flash-gguf/resolve/main"
+DEEPSEEK41_MODEL="DeepSeek-V4.1-Flash-Q2.gguf"
 
 qwen_files() {
   cat <<EOF
@@ -94,6 +97,15 @@ $VISION_ENCODER|$DEEPSEEK_REPO/$VISION_ENCODER|0.9 GB|mmproj
 EOF
 }
 
+# DeepSeek V4.1 Flash: one file, larger than the machine's memory, so the
+# engine reads its experts from the disk as it runs.  It has no draft head and
+# no image encoder.  Nothing installs it unless it is named.
+deepseek41_files() {
+  cat <<EOF
+$DEEPSEEK41_MODEL|$DEEPSEEK41_REPO/$DEEPSEEK41_MODEL|366 GB|model
+EOF
+}
+
 # The DSpark sidecar is not published as a GGUF: it lives beside the model it
 # drafts for, and when it is not there yet it is built out of the three
 # official weight shards that hold the draft layers, exactly as the reference
@@ -117,6 +129,7 @@ model_dir() {
   local current="$ROLE_model"
   [ "$SLOT" = 2 ] && current="$ROLE_model2"
   [ "$SLOT" = 3 ] && current="$ROLE_model3"
+  [ "$SLOT" = 4 ] && current="$ROLE_model4"
   [ -n "$current" ] && dirname "$current" || printf '%s' "$fallback"
 }
 
@@ -277,15 +290,18 @@ fetch() {
 ROLE_model=""
 ROLE_draft=""
 ROLE_mmproj=""
-# The second and third models, when more than one is installed: the engine
-# takes them as ATHENA_MODEL_2 and ATHENA_MODEL_3, and a conversation can then
-# call any of them in with "%switch".
+# The second, third and fourth models, when more than one is installed: the
+# engine takes them as ATHENA_MODEL_2 to ATHENA_MODEL_4, and a conversation can
+# then call any of them in with "%switch".
 ROLE_model2=""
 ROLE_draft2=""
 ROLE_mmproj2=""
 ROLE_model3=""
 ROLE_draft3=""
 ROLE_mmproj3=""
+ROLE_model4=""
+ROLE_draft4=""
+ROLE_mmproj4=""
 SLOT=1
 # What a conversation writes after %switch to call each slot in.
 SLOT_NAMES=()
@@ -311,6 +327,14 @@ remember() {
       model) ROLE_model3="$2" ;;
       draft) ROLE_draft3="$2" ;;
       mmproj) ROLE_mmproj3="$2" ;;
+    esac
+    return 0
+  fi
+  if [ "$SLOT" = 4 ]; then
+    case "$1" in
+      model) ROLE_model4="$2" ;;
+      draft) ROLE_draft4="$2" ;;
+      mmproj) ROLE_mmproj4="$2" ;;
     esac
     return 0
   fi
@@ -428,6 +452,9 @@ env_file() {
     [ -n "$ROLE_model3" ] && say "export ATHENA_MODEL_3=$ROLE_model3"
     [ -n "$ROLE_draft3" ] && say "export ATHENA_DRAFT_3=$ROLE_draft3"
     [ -n "$ROLE_mmproj3" ] && say "export ATHENA_MMPROJ_3=$ROLE_mmproj3"
+    [ -n "$ROLE_model4" ] && say "export ATHENA_MODEL_4=$ROLE_model4"
+    [ -n "$ROLE_draft4" ] && say "export ATHENA_DRAFT_4=$ROLE_draft4"
+    [ -n "$ROLE_mmproj4" ] && say "export ATHENA_MMPROJ_4=$ROLE_mmproj4"
   } > "$out"
   if [ -z "$ROLE_model" ]; then
     say ""
@@ -450,6 +477,9 @@ install_one() {
     visio|vision)
       install_model "DeepSeek V4 Flash Vision-Exp" "$(vision_files)" deepseek-vision || return 1
       ;;
+    deepseek4.1)
+      install_model "DeepSeek V4.1 Flash" "$(deepseek41_files)" deepseek-v41 || return 1
+      ;;
     deepseek)
       local failed=0
       install_model "DeepSeek V4 Flash" "$(deepseek_files)" deepseek || failed=1
@@ -464,7 +494,7 @@ install_one() {
       fi
       return $failed
       ;;
-    *) die "--model must be qwen, deepseek, visio, both, all or a list of them" ;;
+    *) die "--model must be qwen, deepseek, visio, deepseek4.1, both, all or a list of them" ;;
   esac
 }
 
@@ -480,24 +510,34 @@ main() {
     say "  4) Qwen and DeepSeek             — 184 GB; one runs, and a conversation"
     say "                                     calls the other in with %switch"
     say "  5) all three                     — 278 GB"
+    say "  6) DeepSeek V4.1 Flash           — 366 GB, more than memory holds: the"
+    say "                                     engine reads it from the disk as it runs"
+    say "Several numbers, as in 1,6, install each; the first is the one that starts."
     if [ "$ASSUME_YES" = 1 ]; then
       CHOICE=qwen
     else
       printf 'Choice [1]: '
       read -r answer
-      case "${answer:-1}" in
-        1) CHOICE=qwen ;;
-        2) CHOICE=deepseek ;;
-        3) CHOICE=visio ;;
-        4) CHOICE=both ;;
-        5) CHOICE=all ;;
-        *) die "choose 1, 2, 3, 4 or 5" ;;
-      esac
+      local number picked=""
+      for number in ${answer//,/ }; do
+        case "$number" in
+          1) picked="$picked,qwen" ;;
+          2) picked="$picked,deepseek" ;;
+          3) picked="$picked,visio" ;;
+          4) picked="$picked,qwen,deepseek" ;;
+          5) picked="$picked,qwen,deepseek,visio" ;;
+          6) picked="$picked,deepseek4.1" ;;
+          *) die "choose 1, 2, 3, 4, 5 or 6, or several of them" ;;
+        esac
+      done
+      CHOICE="${picked#,}"
+      [ -n "$CHOICE" ] || CHOICE=qwen
     fi
   fi
 
   # Qwen first in both and all: it is the one the engine starts with, and
   # the one a %switch comes back to.  A list is taken in its own order.
+  # DeepSeek V4.1 is in neither: at 366 GB it is installed only when named.
   local list one seen=" "
   case "$CHOICE" in
     both) list="qwen deepseek" ;;
@@ -507,15 +547,15 @@ main() {
   for one in $list; do
     [ "$one" = vision ] && one=visio
     case "$one" in
-      qwen|deepseek|visio) ;;
-      *) die "--model must be qwen, deepseek, visio, both, all or a list of them" ;;
+      qwen|deepseek|visio|deepseek4.1) ;;
+      *) die "--model must be qwen, deepseek, visio, deepseek4.1, both, all or a list of them" ;;
     esac
     case "$seen" in *" $one "*) die "$one is in the list twice" ;; esac
     seen="$seen$one "
     SLOT_NAMES+=("$one")
   done
   [ "${#SLOT_NAMES[@]}" -ge 1 ] || die "no model named"
-  [ "${#SLOT_NAMES[@]}" -le 3 ] || die "at most three models"
+  [ "${#SLOT_NAMES[@]}" -le 4 ] || die "at most four models"
 
   mkdir -p "$MODELS_DIR" || die "cannot create $MODELS_DIR"
   for one in "${SLOT_NAMES[@]}"; do

@@ -21,7 +21,7 @@
 #   ATHENA_MMPROJ_2       its vision encoder, if it has one
 #   ATHENA_MODEL_3        a third one, with ATHENA_DRAFT_3 and ATHENA_MMPROJ_3
 #   ATHENA_MODEL_4        a fourth one, with ATHENA_DRAFT_4 and ATHENA_MMPROJ_4
-#                         (install.sh fills slots 2 and 3; slot 4 is set by hand)
+#                         (install.sh fills them in the order it is given)
 #   ATHENA_API_MODEL      athena (default): serve the model as "Athena";
 #                         model: serve it by its family name
 #   ATHENA_MODEL_NAME     serve this exact name instead of either
