@@ -20,6 +20,8 @@
 #   ATHENA_DRAFT_2        its speculative decoding head
 #   ATHENA_MMPROJ_2       its vision encoder, if it has one
 #   ATHENA_MODEL_3        a third one, with ATHENA_DRAFT_3 and ATHENA_MMPROJ_3
+#   ATHENA_MODEL_4        a fourth one, with ATHENA_DRAFT_4 and ATHENA_MMPROJ_4
+#                         (install.sh fills slots 2 and 3; slot 4 is set by hand)
 #   ATHENA_API_MODEL      athena (default): serve the model as "Athena";
 #                         model: serve it by its family name
 #   ATHENA_MODEL_NAME     serve this exact name instead of either
@@ -146,7 +148,7 @@ fi
 # The image budget sizes Qwen's encoder; DeepSeek's encoder file fixes its own
 # and takes any budget at or above it.  It is one setting for the server and
 # a switch keeps it, so it goes in whenever any of the models has an encoder.
-if [ -n "${ATHENA_MMPROJ:-}${ATHENA_MMPROJ_2:-}${ATHENA_MMPROJ_3:-}" ]; then
+if [ -n "${ATHENA_MMPROJ:-}${ATHENA_MMPROJ_2:-}${ATHENA_MMPROJ_3:-}${ATHENA_MMPROJ_4:-}" ]; then
   args+=(--image-max-tokens "${ATHENA_IMAGE_TOKENS:-1024}")
 fi
 
@@ -196,9 +198,9 @@ register_model() {  # model, draft, mmproj
   args+=(--alt-model "$entry")
 }
 
-if [ -n "${ATHENA_MODEL_2:-}${ATHENA_MODEL_3:-}" ]; then
+if [ -n "${ATHENA_MODEL_2:-}${ATHENA_MODEL_3:-}${ATHENA_MODEL_4:-}" ]; then
   register_model "$model" "${ATHENA_DRAFT:-}" "${ATHENA_MMPROJ:-}"
-  for slot in 2 3; do
+  for slot in 2 3 4; do
     var="ATHENA_MODEL_$slot"; path="${!var:-}"
     [ -n "$path" ] || continue
     [ -r "$path" ] || fail "model $slot is not readable: $path"
