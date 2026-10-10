@@ -348,8 +348,8 @@ there is no OCR.
 
 You choose what the engine runs: Qwen3.8 Flash Next, DeepSeek V4 Flash,
 DeepSeek V4 Flash Vision-Exp, DeepSeek V4.1 Flash, or several of them. With
-one model it behaves as any server does. With more, a conversation can ask for another
-one and watch it arrive:
+one model it behaves as any server does. With more, a conversation can ask
+for another one and watch it arrive:
 
 ```
 %switch visio
