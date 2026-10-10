@@ -218,10 +218,6 @@ in memory:
 | A 4,900-token conversation right after a restart | answered in 9.9 seconds from its disk checkpoint, 54 to read it again |
 | `%switch deepseek4.1` from DeepSeek V4 Flash | 55 seconds |
 
-The drive sets the pace when the text is new to it. A text that calls on
-experts still on the SSD — an Italian novel it had never read, here — was
-read at 194 tokens/s, and the answer about it came at 4 tokens/s.
-
 ## Quick start
 
 1. Get the engine. It is published as a container image, and the same

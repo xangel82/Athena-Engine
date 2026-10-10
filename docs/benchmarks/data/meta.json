@@ -73,7 +73,6 @@
       "binary_md5": "a2f0f972a14bfb23f5a0d17f43ce537d",
       "launcher": "the engine started on V4.1 alone, context 8192, streamed from the internal NVMe drive, with the expert read counts of earlier runs, 90 s after ready",
       "method": "a 6,361-token English ledger read in 12.58 s; 256 tokens answered at 83.6 ms/token; the same requests the development build was measured with on 2026-10-09 (12.2 s, 86 ms/token)",
-      "new text": "an 8,400-token Italian novel never read before (prompts cut from I Promessi Sposi), two throw-away prompts first: read at 194 tokens/s, then 256 tokens at 4.1 tokens/s, on the release candidate 47b848af (build md5 8e18f813e2e9ef7234763ed6b8a4b1d7)",
       "restore": "a 4,935-token ledger asked right after the engine started, 53.6 s, then again after a restart from its disk checkpoint, 9.8 s"
     },
     "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.2.4.json)": {
