@@ -164,7 +164,7 @@ to call anything, recovering from tool errors, resisting text that tries to
 hijack them, and returning JSON that fits a schema.
 
 <p align="center">
-  <img src="docs/benchmarks/tool-quality.svg" alt="Tool-calling quality: Qwen3.8 Flash Next 92, DeepSeek V4 Flash 91, DeepSeek V4 Flash Vision-Exp 88 out of 100" width="760">
+  <img src="docs/benchmarks/tool-quality.svg" alt="Tool-calling quality: Qwen3.8 Flash Next 92, DeepSeek V4 Flash 91, DeepSeek V4 Flash Vision-Exp 88, DeepSeek V4.1 Flash 87 out of 100" width="760">
 </p>
 
 **92 and 91 out of 100 — ★★★★★ Excellent — for Qwen3.8 Flash Next and
@@ -172,6 +172,11 @@ DeepSeek V4 Flash, 88 — ★★★★ Good — for Vision-Exp**, on a desktop m
 from models quantised to two and four bits. Qwen3.8 Flash Next passed 59
 scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
+
+DeepSeek V4.1 Flash scores **87 — ★★★★ Good**: 56 passed, 8 half-passed,
+5 failed, read from the SSD at four tokens a second. It was given 1,800
+seconds a request instead of the tool's 120, which a model that writes that
+slowly needs; no scenario took more than 470 seconds in all.
 
 The same holds with several agents at once. Four conversations in parallel,
 each with a worker lane of its own, and Qwen3.8 Flash Next scored **93 out

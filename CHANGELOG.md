@@ -16,7 +16,10 @@
   after a `%switch deepseek4.1`.
 - V4.1 speaks its own chat template, and the tool calls it writes in its own
   syntax reach the client as tool calls, on the OpenAI and the Anthropic
-  API alike. It thinks at `high` unless asked for `none` or `max`.
+  API alike. A request that forces its `tool_choice` — `required` (`any` on
+  the Anthropic API) or a named tool — tells V4.1 so in its prompt, and
+  `none` offers it no tools. It thinks at `high` unless asked for `none` or
+  `max`.
 - Its context is 16,384 tokens for now. V4.1's candidate layer covers that
   much until its block selection exists, and the engine refuses a longer
   prompt rather than answer from rows the model never sees.
@@ -118,7 +121,10 @@ reads an 8,400-token Italian text at 194 tokens/s and writes 4.0 tokens/s;
 a 4,900-token conversation is answered in 9.9 seconds from its disk
 checkpoint after a restart, where reading it again takes 54. In the
 container, `%switch` takes 45 seconds to DeepSeek V4 Flash, 55 to V4.1 and
-75 back to Qwen.
+75 back to Qwen. On tool-eval-bench, run as the other models were but with
+1,800 seconds a request, it scores 87 out of 100 (★★★★ Good): 56 passed,
+8 half-passed, 5 failed. Raw data in
+`docs/benchmarks/data/tooleval-deepseek-v41.json`.
 
 ## 0.2.4 - 2026-09-27
 

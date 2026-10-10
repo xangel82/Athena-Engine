@@ -26,7 +26,7 @@
       "date": "2026-10-10T01:05:00+0000",
       "commit": "47b848af",
       "release": "0.3.0",
-      "binary": "the 0.3.0 release build before strip; packaged as bin/athena-engine, md5 a362d640b916e99acd514abe567ea1f1",
+      "binary": "the build of 47b848af before strip, the release candidate: the 0.3.0 release (2402f6ce, packaged md5 a2f0f972a14bfb23f5a0d17f43ce537d) changes only DeepSeek V4.1's prompt",
       "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
       "binary_bytes": 53195856,
       "launcher": "athena-engine.sh of the 0.3.0 release, MTP head and vision encoder loaded",
@@ -36,7 +36,7 @@
       "date": "2026-10-10T01:20:00+0000",
       "commit": "47b848af",
       "release": "0.3.0",
-      "binary": "the 0.3.0 release build before strip; packaged as bin/athena-engine, md5 a362d640b916e99acd514abe567ea1f1",
+      "binary": "the build of 47b848af before strip, the release candidate: the 0.3.0 release (2402f6ce, packaged md5 a2f0f972a14bfb23f5a0d17f43ce537d) changes only DeepSeek V4.1's prompt",
       "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
       "binary_bytes": 53195856,
       "launcher": "athena-engine.sh of the 0.3.0 release, MTP head and vision encoder loaded",
@@ -45,16 +45,24 @@
     "0.3.0 against 0.2.4, Qwen3.8 Flash Next and DeepSeek V4 Flash (the CHANGELOG's pairs)": {
       "date": "2026-10-09T22:41:00+0000",
       "commit": "b29d8ea6 against 287eaf64",
-      "binary_md5": "31d1c17b1fe70121170cc7e20e20050a (release candidate, the same Qwen and DeepSeek code as 47b848af) against 654b1afb65441b09da92bed3b09195da (0.2.4)",
+      "binary_md5": "31d1c17b1fe70121170cc7e20e20050a (release candidate, the same Qwen and DeepSeek code as 2402f6ce) against 654b1afb65441b09da92bed3b09195da (0.2.4)",
       "launcher": "athena-engine.sh of the 0.3.0 release for both, one model each, Qwen with its MTP head and vision encoder, DeepSeek with its DSpark sidecar",
       "method": "two throw-away 8k prompts, then 8k, 32k and 64k twice, then 256 tokens at temperature 0 after 8k and 32k, with the hash of the text; DeepSeek's 0.2.4 run twice and the second counted, since the first run after Qwen is slower"
     },
     "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.3.0.json, tooleval-qwen-parallel4-0.2.4-tool-7fa6dd7.json)": {
       "date": "2026-10-10T01:27:16+0000",
       "commit": "47b848af, and 287eaf64 for the 0.2.4 run",
-      "release": "0.3.0 as installed (bin/athena-engine, md5 a362d640b916e99acd514abe567ea1f1), and 0.2.4 (md5 654b1afb65441b09da92bed3b09195da) run the same night",
+      "release": "the 0.3.0 release candidate 47b848af as installed (md5 a362d640b916e99acd514abe567ea1f1; the release changes only DeepSeek V4.1's prompt), and 0.2.4 (md5 654b1afb65441b09da92bed3b09195da) run the same night",
       "tool": "tool-eval-bench at 7fa6dd7 (v2.3.0+8) --seed 42 --parallel 4 --temperature 0",
       "note": "both score 91 on the same scenarios, and 0.3.0 scores 91 again on a second run; 0.2.4's 93 (tooleval-qwen-parallel4-0.2.4.json) was measured on 2026-09-27 with tool-eval-bench 2.7.0, which was not on the machine this time"
+    },
+    "tool calling, DeepSeek V4.1 Flash (tooleval-deepseek-v41.json)": {
+      "date": "2026-10-10T10:02:29+0000",
+      "commit": "2402f6ce",
+      "release": "0.3.0",
+      "binary": "bin/athena-engine of the 0.3.0 release, installed, DeepSeek V4.1 Flash called in with %switch deepseek4.1",
+      "binary_md5": "a2f0f972a14bfb23f5a0d17f43ce537d",
+      "tool": "tool-eval-bench at 7fa6dd7 (v2.3.0+8), --parallel 1 --temperature 0, no seed, --timeout 1800: the copy and flags of the other models' single-agent runs, with a timeout a model writing 4 tokens/s needs; the longest scenario took 469 s"
     },
     "DeepSeek V4.1 Flash": {
       "date": "2026-10-10T00:50:00+0000",
