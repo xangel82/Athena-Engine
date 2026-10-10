@@ -178,6 +178,14 @@ DeepSeek V4.1 Flash scores **87 — ★★★★ Good**: 56 passed, 8 half-passe
 seconds a request instead of the tool's 120, which a model that writes that
 slowly needs; no scenario took more than 470 seconds in all.
 
+Every score here is taken at temperature 0, tool-eval-bench's default: the
+same run gives the same answers, so a score that moves is an engine that
+changed. It is also the strictest setting, stricter than the sampling the
+models' authors recommend, and the one where a reasoning model can think in
+circles: DeepSeek V4.1 Flash fails TC-05 at temperature 0, going over the
+same two names until it runs out of tokens, and passes it three times out of
+three at 0.6.
+
 The same holds with several agents at once. Four conversations in parallel,
 each with a worker lane of its own, and Qwen3.8 Flash Next scored **93 out
 of 100** on the tool-eval-bench 2.7.0 run with `--parallel 4` (0.2.4). On

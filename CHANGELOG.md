@@ -124,9 +124,14 @@ container, `%switch` takes 45 seconds to DeepSeek V4 Flash, 55 to V4.1 and
 75 back to Qwen. On tool-eval-bench, run as the other models were but with
 1,800 seconds a request, it scores 87 out of 100 (★★★★ Good): 56 passed,
 8 half-passed, 5 failed. Raw data in
-`docs/benchmarks/data/tooleval-deepseek-v41.json`.
+`docs/benchmarks/data/tooleval-deepseek-v41.json`. Like every published
+score it is taken at temperature 0, the strictest setting: there V4.1 fails
+TC-05 by thinking in circles until it runs out of tokens, and at 0.6 it
+passes it three times out of three.
 
 ## 0.2.4 - 2026-09-27
+
+Not published as an image: everything below ships in 0.3.0.
 
 ### Engine
 
