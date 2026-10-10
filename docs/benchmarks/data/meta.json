@@ -62,15 +62,19 @@
       "release": "0.3.0",
       "binary": "bin/athena-engine of the 0.3.0 release, installed, DeepSeek V4.1 Flash called in with %switch deepseek4.1",
       "binary_md5": "a2f0f972a14bfb23f5a0d17f43ce537d",
-      "tool": "tool-eval-bench at 7fa6dd7 (v2.3.0+8), --parallel 1 --temperature 0, no seed, --timeout 1800: the copy and flags of the other models' single-agent runs, with a timeout a model writing 4 tokens/s needs; the longest scenario took 469 s"
+      "tool": "tool-eval-bench at 7fa6dd7 (v2.3.0+8), --parallel 1 --temperature 0, no seed, --timeout 1800: the copy and flags of the other models' single-agent runs, with the timeout a 4,096-token answer at about 11 tokens/s needs; the longest scenario took 469 s",
+      "generation": "from the service log of the run, 190 requests one at a time: 51,839 tokens written at 92.3 ms/token (10.8 tokens/s, least squares on prompt and answer lengths); the two 4,096-token answers 10.7 tokens/s"
     },
-    "DeepSeek V4.1 Flash": {
-      "date": "2026-10-10T00:50:00+0000",
-      "commit": "47b848af",
+    "DeepSeek V4.1 Flash, prompt and generation": {
+      "date": "2026-10-10T12:40:00+0000",
+      "commit": "2402f6ce",
       "release": "0.3.0",
-      "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
-      "launcher": "athena-engine.sh of the 0.3.0 release, context 16384, streamed from the internal NVMe drive",
-      "method": "two throw-away prompts, then an 8,400-token Italian prompt and 256 tokens at temperature 0, with the read counts of an earlier run; the restore figures are a 4,935-token ledger asked cold, then again after a restart from its disk checkpoint"
+      "binary": "bin/athena-engine of the 0.3.0 release, installed",
+      "binary_md5": "a2f0f972a14bfb23f5a0d17f43ce537d",
+      "launcher": "the engine started on V4.1 alone, context 8192, streamed from the internal NVMe drive, with the expert read counts of earlier runs, 90 s after ready",
+      "method": "a 6,361-token English ledger read in 12.58 s; 256 tokens answered at 83.6 ms/token; the same requests the development build was measured with on 2026-10-09 (12.2 s, 86 ms/token)",
+      "new text": "an 8,400-token Italian novel never read before (prompts cut from I Promessi Sposi), two throw-away prompts first: read at 194 tokens/s, then 256 tokens at 4.1 tokens/s, on the release candidate 47b848af (build md5 8e18f813e2e9ef7234763ed6b8a4b1d7)",
+      "restore": "a 4,935-token ledger asked right after the engine started, 53.6 s, then again after a restart from its disk checkpoint, 9.8 s"
     },
     "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.2.4.json)": {
       "date": "2026-09-27T13:30:10+0000",

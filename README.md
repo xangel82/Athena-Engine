@@ -174,9 +174,10 @@ scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
 DeepSeek V4.1 Flash scores **87 — ★★★★ Good**: 56 passed, 8 half-passed,
-5 failed, read from the SSD at four tokens a second. It was given 1,800
-seconds a request instead of the tool's 120, which a model that writes that
-slowly needs; no scenario took more than 470 seconds in all.
+5 failed, read from the SSD and writing 10.8 tokens a second over the run.
+It was given 1,800 seconds a request instead of the tool's 120, which a
+4,096-token answer at that pace needs; no scenario took more than 470
+seconds in all.
 
 Every score here is taken at temperature 0, tool-eval-bench's default: the
 same run gives the same answers, so a score that moves is an engine that
@@ -205,17 +206,21 @@ session is idle, so the answer in progress pays nothing for it.
 
 ### A model larger than the machine
 
-DeepSeek V4.1 Flash fetches from the SSD whatever memory cannot hold, so the
-drive sets its pace, and a text that calls on many experts reads more slowly
-than one that keeps calling on the same few. On the same GB10, from its
-internal NVMe drive:
+DeepSeek V4.1 Flash fetches from the SSD whatever memory cannot hold, and
+keeps in memory the experts it reads most, learned from its own use. On the
+same GB10, from its internal NVMe drive, with the experts of its usual work
+in memory:
 
 | DeepSeek V4.1 Flash | |
 |---|---|
-| Reading an 8,400-token Italian text | 194 tokens/s, 43 seconds |
-| Generating an answer | 4.0 tokens/s |
-| A 4,900-token conversation after a restart | answered in 9.9 seconds from its disk checkpoint, 54 to read it again |
+| Reading a 6,400-token prompt | 505 tokens/s, 12.6 seconds |
+| Generating an answer | 12 tokens/s; 10.8 over the 52,000 tokens of its tool-eval run |
+| A 4,900-token conversation right after a restart | answered in 9.9 seconds from its disk checkpoint, 54 to read it again |
 | `%switch deepseek4.1` from DeepSeek V4 Flash | 55 seconds |
+
+The drive sets the pace when the text is new to it. A text that calls on
+experts still on the SSD — an Italian novel it had never read, here — was
+read at 194 tokens/s, and the answer about it came at 4 tokens/s.
 
 ## Quick start
 

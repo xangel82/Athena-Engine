@@ -116,10 +116,13 @@ same night with the same copy of the tool, on the same scenarios; the 93
 published with 0.2.4 was taken with tool-eval-bench 2.7.0. Raw data in
 `docs/benchmarks/data/tooleval-qwen-parallel4-0.3.0.json`.
 
-DeepSeek V4.1 Flash, from the internal NVMe drive of the same machine,
-reads an 8,400-token Italian text at 194 tokens/s and writes 4.0 tokens/s;
-a 4,900-token conversation is answered in 9.9 seconds from its disk
-checkpoint after a restart, where reading it again takes 54. In the
+DeepSeek V4.1 Flash, from the internal NVMe drive of the same machine and
+with the experts of its usual work in memory, reads a 6,400-token prompt in
+12.6 seconds (505 tokens/s) and writes 12 tokens/s — 10.8 over the 52,000
+tokens of its tool-eval run; a text new to it, whose experts are still on
+the drive, goes as slowly as 194 tokens/s read and 4 written. A 4,900-token
+conversation is answered in 9.9 seconds from its disk checkpoint right
+after a restart, where reading it again takes 54. In the
 container, `%switch` takes 45 seconds to DeepSeek V4 Flash, 55 to V4.1 and
 75 back to Qwen. On tool-eval-bench, run as the other models were but with
 1,800 seconds a request, it scores 87 out of 100 (★★★★ Good): 56 passed,
