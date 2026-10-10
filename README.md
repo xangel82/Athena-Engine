@@ -26,7 +26,8 @@ Athena's Engine exists to change that. It runs frontier-class models on a
 single NVIDIA GB10 — a DGX Spark or an ASUS Ascent GX10, a computer that fits
 on a desk — fast enough for real work: reading long documents, holding long
 conversations, driving coding agents. Today it runs **DeepSeek V4 Flash**,
-its **Vision-Exp** checkpoint that reads images, and **Qwen3.8 Flash Next**.
+its **Vision-Exp** checkpoint that reads images, **Qwen3.8 Flash Next**, and
+**DeepSeek V4.1 Flash**, a model larger than the machine, read from its SSD.
 
 **Local.** Your prompts, your documents and your code stay on your machine.
 No cloud account, no per-token bill, no one else's terms between you and the
@@ -38,7 +39,7 @@ personal use, research, education, and developers and small companies at work.
 
 ## What it does
 
-- **Long context that stays fast.** Prefill holds 920–1,170 tokens/s from 8k
+- **Long context that stays fast.** Prefill holds 920–1,200 tokens/s from 8k
   all the way to the full 256k context, and generation does not slow down as
   the conversation grows.
 - **A conversation is not read twice.** Every model keeps its context on
@@ -60,9 +61,13 @@ personal use, research, education, and developers and small companies at work.
   `Athena`: configure your clients once, and they keep working when you swap
   DeepSeek for Qwen and back.
 - **Every model at hand, if you want them.** Start the engine with two or
-  all three of them and a conversation can call another in — `%switch visio`
+  more of them and a conversation can call another in — `%switch visio`
   when it needs eyes, `%switch deepseek` to go back — watching the release
   and the load as they happen.
+- **A model larger than the machine.** DeepSeek V4.1 Flash takes 340 GiB on
+  disk, on a computer with 128 GB. The engine keeps in memory what every
+  token reads and fetches the rest from the SSD as it runs: the experts a
+  token is routed to, and the rows of V4.1's Engram memory it looks up.
 
 ## Supported models
 
@@ -71,12 +76,20 @@ personal use, research, education, and developers and small companies at work.
 | DeepSeek V4 Flash | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark sidecar | — |
 | DeepSeek V4 Flash Vision-Exp | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark drafter | images with `DeepSeek-V4-Flash-Vision-Encoder.gguf`; PDF, DOCX, Markdown, HTML, text |
 | Qwen3.8 Flash Next | Unsloth UD-IQ4_XS | 262,144 tokens | MTP head | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
+| DeepSeek V4.1 Flash | Q2: IQ2_XXS and Q2_K experts, Q8 projections and shared experts, FP8 Engram tables | 16,384 tokens | — | — |
 
 Vision-Exp is DeepSeek's experimental checkpoint that reads images. On text
 it scores a little below DeepSeek V4 Flash (see
 [Doing what it is told](#doing-what-it-is-told)), so the two are best
 installed side by side, with a conversation switching to Vision-Exp when it
 has pictures to look at.
+
+DeepSeek V4.1 Flash does not fit the machine: its file is 340 GiB, 189 of
+them the tables of its Engram memory. It runs from a fast local SSD, which
+sets its pace (see [A model larger than the machine](#a-model-larger-than-the-machine)),
+and it reads 16,384 tokens of context for now: its candidate
+layer covers that much, and the engine refuses a longer prompt rather than
+answer from rows the model never sees.
 
 Model weights are not distributed with the engine. `install.sh` fetches them,
 and where they come from and the exact files the release is validated with
@@ -103,12 +116,12 @@ thirty-two times the context for at most a sixth of the speed.
 
 | Prompt | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
 |---|---|---|---|
-| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,080 tokens/s |
-| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,063 tokens/s |
-| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,052 tokens/s |
-| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,034 tokens/s |
-| 196k | 1,025 tokens/s | 998 tokens/s | 1,013 tokens/s |
-| 256k | 995 tokens/s | 919 tokens/s | 985 tokens/s |
+| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,201 tokens/s |
+| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,185 tokens/s |
+| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,168 tokens/s |
+| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,144 tokens/s |
+| 196k | 1,025 tokens/s | 998 tokens/s | 1,119 tokens/s |
+| 256k | 995 tokens/s | 919 tokens/s | 1,091 tokens/s |
 
 A quarter of a million tokens — a 700-page book — is read in less than five
 minutes.
@@ -126,12 +139,12 @@ between neighbouring points is the run-to-run variation, not a trend.
 
 | Context | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
 |---|---|---|---|
-| 8k | 22.5 tokens/s | 16.6 tokens/s | 33.8 tokens/s |
-| 32k | 20.3 tokens/s | 19.0 tokens/s | 34.5 tokens/s |
-| 64k | 19.8 tokens/s | 24.2 tokens/s | 32.9 tokens/s |
-| 128k | 21.4 tokens/s | 24.3 tokens/s | 31.9 tokens/s |
-| 196k | 19.2 tokens/s | 18.3 tokens/s | 30.8 tokens/s |
-| 256k | 19.6 tokens/s | 21.1 tokens/s | 31.6 tokens/s |
+| 8k | 22.5 tokens/s | 16.6 tokens/s | 33.6 tokens/s |
+| 32k | 20.3 tokens/s | 19.0 tokens/s | 33.0 tokens/s |
+| 64k | 19.8 tokens/s | 24.2 tokens/s | 34.7 tokens/s |
+| 128k | 21.4 tokens/s | 24.3 tokens/s | 32.2 tokens/s |
+| 196k | 19.2 tokens/s | 18.3 tokens/s | 32.2 tokens/s |
+| 256k | 19.6 tokens/s | 21.1 tokens/s | 31.3 tokens/s |
 
 Qwen is the fastest because it is the smallest model; DeepSeek V4 Flash
 answers at a steady twenty tokens a second whether the conversation holds
@@ -161,8 +174,10 @@ scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
 The same holds with several agents at once. Four conversations in parallel,
-each with a worker lane of its own, and Qwen3.8 Flash Next scores **93 out
-of 100** on the tool-eval-bench 2.7.0 run with `--parallel 4`.
+each with a worker lane of its own, and Qwen3.8 Flash Next scored **93 out
+of 100** on the tool-eval-bench 2.7.0 run with `--parallel 4` (0.2.4). On
+0.3.0 the copy of the tool at hand scores 91 — and so does 0.2.4 run with it
+the same night, on the same scenarios.
 
 The full reports, scenario by scenario, are in
 [docs/benchmarks/data](docs/benchmarks/data).
@@ -175,14 +190,28 @@ instead of being read again. A 141,519-token conversation comes back in
 its first reading took — the file is 619 MB, and it is written while the
 session is idle, so the answer in progress pays nothing for it.
 
+### A model larger than the machine
+
+DeepSeek V4.1 Flash fetches from the SSD whatever memory cannot hold, so the
+drive sets its pace, and a text that calls on many experts reads more slowly
+than one that keeps calling on the same few. On the same GB10, from its
+internal NVMe drive:
+
+| DeepSeek V4.1 Flash | |
+|---|---|
+| Reading an 8,400-token Italian text | 194 tokens/s, 43 seconds |
+| Generating an answer | 4.0 tokens/s |
+| A 4,900-token conversation after a restart | answered in 9.9 seconds from its disk checkpoint, 54 to read it again |
+| `%switch deepseek4.1` from DeepSeek V4 Flash | 55 seconds |
+
 ## Quick start
 
 1. Get the engine. It is published as a container image, and the same
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.2.4
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.2.4
+   docker pull ghcr.io/xangel82/athena-engine:0.3.0
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.3.0
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```
@@ -200,11 +229,14 @@ session is idle, so the answer in progress pays nothing for it.
    ./athena-engine/install.sh --model both    # Qwen and DeepSeek, so a chat can switch between them
    ./athena-engine/install.sh --model all     # Qwen, DeepSeek and DeepSeek Vision-Exp
    ./athena-engine/install.sh --model deepseek,visio   # any list; the first is the one that starts
+   ./athena-engine/install.sh --model qwen,deepseek4.1 # DeepSeek V4.1 Flash comes only when named
    ```
 
    It downloads about 97 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
    Flash, 94 GB for DeepSeek V4 Flash Vision-Exp, 184 GB for Qwen and
-   DeepSeek or 278 GB for all three, checks each file against the checksum
+   DeepSeek or 278 GB for all three. DeepSeek V4.1 Flash is 366 GB more, and
+   only when you name it: `all` means the other three, and the menu offers it
+   as a choice of its own. The installer checks each file against the checksum
    the repository publishes, and **resumes**: stop it at any point, run the
    same command again, and it carries on from where it stopped rather than
    starting over.
@@ -259,8 +291,17 @@ session is idle, so the answer in progress pays nothing for it.
    ./athena-engine/athena-engine.sh
    ```
 
-   The launcher recognises the model from the file and picks its settings.
-   `ATHENA_DRAFT` is optional: it enables speculative decoding.
+   For DeepSeek V4.1 Flash, which has neither a draft head nor an image
+   encoder:
+
+   ```bash
+   export ATHENA_MODEL=/models/DeepSeek-V4.1-Flash-Q2.gguf
+   ./athena-engine/athena-engine.sh
+   ```
+
+   The launcher recognises the model from the file and picks its settings,
+   streaming from the SSD included for V4.1. `ATHENA_DRAFT` is optional: it
+   enables speculative decoding.
 
 4. Send a request:
 
@@ -306,8 +347,8 @@ there is no OCR.
 ### Several models, one engine
 
 You choose what the engine runs: Qwen3.8 Flash Next, DeepSeek V4 Flash,
-DeepSeek V4 Flash Vision-Exp, or any two or three of them. With one model it
-behaves as any server does. With more, a conversation can ask for another
+DeepSeek V4 Flash Vision-Exp, DeepSeek V4.1 Flash, or several of them. With
+one model it behaves as any server does. With more, a conversation can ask for another
 one and watch it arrive:
 
 ```
@@ -326,8 +367,8 @@ Ready in 45.1 s.
 
 Those lines arrive as each one becomes true, in the reasoning channel of a
 streaming reply, so the minute a switch takes is a minute you can watch
-rather than a minute of silence. `%switch qwen` and `%switch deepseek` call
-the others in; each name is the checkpoint it loads, and asking for the model
+rather than a minute of silence. `%switch qwen`, `%switch deepseek` and
+`%switch deepseek4.1` call the others in; each name is the checkpoint it loads, and asking for the model
 already running says so rather than loading it again. A machine that holds
 one model of its size cannot hold two, so the engine releases before it
 loads, and it checks that the room is really there: if it is not, nothing is
@@ -335,12 +376,14 @@ allocated, the model you had comes back, and the answer tells you both
 numbers.
 
 A model keeps its own deployment across a switch — DeepSeek device-resident
-with its small KV ring, Qwen mapped with the whole context — because a switch
-changes the model, not the machine it runs on. Requests that arrive mid-switch
+with its small KV ring, Qwen mapped with the whole context, V4.1 read from
+the SSD with its 16,384 tokens — because a switch changes the model, not the
+machine it runs on. Requests that arrive mid-switch
 wait for the new model rather than failing.
 
-`./athena-engine/install.sh --model all` writes all of this for you; by hand,
-it is the other models named alongside the first:
+`./athena-engine/install.sh --model qwen,deepseek,visio,deepseek4.1` writes
+all of this for you; by hand, it is the other models named alongside the
+first:
 
 ```bash
 export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
@@ -351,6 +394,7 @@ export ATHENA_DRAFT_2=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
 export ATHENA_MODEL_3=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
 export ATHENA_DRAFT_3=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 export ATHENA_MMPROJ_3=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
+export ATHENA_MODEL_4=/models/DeepSeek-V4.1-Flash-Q2.gguf
 ./athena-engine/athena-engine.sh
 ```
 
@@ -367,9 +411,9 @@ ATHENA_MODELS_DIR=/path/to/models docker compose -f docker/docker-compose.yml up
 ```
 
 It starts DeepSeek V4 Flash. The `environment:` block in
-`docker/docker-compose.yml` chooses what runs: Qwen3.8 Flash Next or
-Vision-Exp instead, or all three, and then the container answers `%switch`
-like any other deployment. Two named volumes keep what should outlive the container:
+`docker/docker-compose.yml` chooses what runs: Qwen3.8 Flash Next,
+Vision-Exp or DeepSeek V4.1 Flash instead, or several of them, and then the
+container answers `%switch` like any other deployment. Two named volumes keep what should outlive the container:
 `/kv`, where conversations are checkpointed, and `/state`. If you mount a
 directory of your own at `/kv` instead, it must belong to root, the user the
 engine runs as in the container: checkpoints carry what your conversations
@@ -389,7 +433,8 @@ unlimited.
 | `POST /v1/completions` | OpenAI Completions |
 | `POST /v1/responses` | OpenAI Responses |
 | `POST /v1/messages` | Anthropic Messages |
-| `GET /v1/models` | model list |
+| `POST /v1/messages/count_tokens` | Anthropic token counting |
+| `GET /v1/models`, `GET /v1/models/{id}` | model list, in a shape both protocols read |
 | `GET /health` | readiness probe |
 
 Any client that talks to these APIs can use Athena's Engine by changing its
@@ -402,15 +447,17 @@ Configure your clients once with that name and they keep working when you
 switch from DeepSeek to Qwen or back.
 
 If you prefer the real name, set `ATHENA_API_MODEL=model` to serve the model
-as `deepseek-v4-flash`, `deepseek-v4-flash-vision` or `qwen3.8-flash-next`,
+as `deepseek-v4-flash`, `deepseek-v4-flash-vision`, `qwen3.8-flash-next` or
+`deepseek-v4.1-flash`,
 or `ATHENA_MODEL_NAME` to choose any name you like. The name is matched exactly, capital letters
 included: a request for any other model is answered with `404 model_not_found`.
 
 ## Requirements
 
 An NVIDIA GB10 with 128 GB of unified memory, DGX OS, and about 93 GB
-(DeepSeek V4 Flash), 94 GB (DeepSeek V4 Flash Vision-Exp) or 97 GB (Qwen3.8
-Flash Next) of disk for each model's files. The driver and CUDA library
+(DeepSeek V4 Flash), 94 GB (DeepSeek V4 Flash Vision-Exp), 97 GB (Qwen3.8
+Flash Next) or 366 GB (DeepSeek V4.1 Flash) of disk for each model's files —
+V4.1's on a fast local SSD, since the engine reads from it as it runs. The driver and CUDA library
 versions the release is validated with are in
 [docs/requirements.md](docs/requirements.md).
 

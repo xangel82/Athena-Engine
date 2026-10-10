@@ -1,12 +1,14 @@
 # Requirements
 
-Validated configuration for release 0.2.4.
+Validated configuration for release 0.3.0.
 
 ## Hardware
 
 - NVIDIA GB10 (DGX Spark, ASUS Ascent GX10) with 128 GB unified memory.
 - Disk for the model you run (see below), plus the durable KV cache budget
   (16 GB by default).
+- For DeepSeek V4.1 Flash, a fast local NVMe SSD: the engine reads the model
+  from it as it runs, and the drive sets how fast it answers.
 
 ## Software
 
@@ -75,5 +77,23 @@ From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Fl
 | `MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf` | MTP head (speculative decoding) |
 | `mmproj-F16.gguf` | vision encoder — without it the model answers text only |
 
+### DeepSeek V4.1 Flash — about 366 GB
+
+From [antirez/deepseek-v4.1-flash-gguf](https://huggingface.co/antirez/deepseek-v4.1-flash-gguf),
+quantised from
+[deepseek-ai/DeepSeek-V4.1-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash):
+
+| File | Role |
+|---|---|
+| `DeepSeek-V4.1-Flash-Q2.gguf` | target model |
+
+One file of 340 GiB: 152 GiB of weights — IQ2_XXS and Q2_K experts, Q8
+attention projections, shared experts and output — and 189 GiB of FP8 Engram
+tables. It is larger than the machine, so the engine keeps in memory what
+every token reads and fetches the experts and Engram rows a token needs from
+the SSD. There is no draft head and no image encoder for it, and its context
+is 16,384 tokens. The installer fetches it only when it is named
+(`--model deepseek4.1`, or its own entry in the menu).
+
 The engine reads the model family from the file, so the launcher needs no
-flag to tell the three apart.
+flag to tell the four apart.

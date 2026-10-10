@@ -23,23 +23,46 @@
       "binary_md5": "87cc114409b3624bd96d9b78994a5463"
     },
     "prefill for Qwen3.8 Flash Next": {
-      "date": "2026-09-27T13:49:37+0000",
-      "commit": "287eaf64",
-      "release": "0.2.4",
-      "binary": "bin/athena-engine of the 0.2.4 release",
-      "binary_md5": "654b1afb65441b09da92bed3b09195da",
-      "binary_bytes": 41495568,
-      "launcher": "athena-engine.sh of the 0.2.4 release, MTP head and vision encoder loaded",
-      "method": "two throw-away 8k prompts first, so the lanes are warm: a lane's first prompt pays its activation and first growth (8k reads at ~1020 tokens/s cold, ~1075 warm)"
+      "date": "2026-10-10T01:05:00+0000",
+      "commit": "47b848af",
+      "release": "0.3.0",
+      "binary": "the 0.3.0 release build before strip; packaged as bin/athena-engine, md5 a362d640b916e99acd514abe567ea1f1",
+      "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
+      "binary_bytes": 53195856,
+      "launcher": "athena-engine.sh of the 0.3.0 release, MTP head and vision encoder loaded",
+      "method": "two throw-away 8k prompts first, so the lanes are warm; then 8k to 256k in order in the same engine, each prompt cut from Manzoni's I Promessi Sposi at 3.3 characters a token and opened by a fresh nonce"
     },
     "generation for Qwen3.8 Flash Next": {
-      "date": "2026-09-27T13:15:00+0000",
-      "commit": "287eaf64",
-      "release": "0.2.4",
-      "binary": "bin/athena-engine of the 0.2.4 release",
-      "binary_md5": "654b1afb65441b09da92bed3b09195da",
-      "binary_bytes": 41495568,
-      "launcher": "athena-engine.sh of the 0.2.4 release, MTP head and vision encoder loaded"
+      "date": "2026-10-10T01:20:00+0000",
+      "commit": "47b848af",
+      "release": "0.3.0",
+      "binary": "the 0.3.0 release build before strip; packaged as bin/athena-engine, md5 a362d640b916e99acd514abe567ea1f1",
+      "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
+      "binary_bytes": 53195856,
+      "launcher": "athena-engine.sh of the 0.3.0 release, MTP head and vision encoder loaded",
+      "method": "256 tokens at temperature 0 after each prompt of the prefill series, asked to summarize it, timed from the first token"
+    },
+    "0.3.0 against 0.2.4, Qwen3.8 Flash Next and DeepSeek V4 Flash (the CHANGELOG's pairs)": {
+      "date": "2026-10-09T22:41:00+0000",
+      "commit": "b29d8ea6 against 287eaf64",
+      "binary_md5": "31d1c17b1fe70121170cc7e20e20050a (release candidate, the same Qwen and DeepSeek code as 47b848af) against 654b1afb65441b09da92bed3b09195da (0.2.4)",
+      "launcher": "athena-engine.sh of the 0.3.0 release for both, one model each, Qwen with its MTP head and vision encoder, DeepSeek with its DSpark sidecar",
+      "method": "two throw-away 8k prompts, then 8k, 32k and 64k twice, then 256 tokens at temperature 0 after 8k and 32k, with the hash of the text; DeepSeek's 0.2.4 run twice and the second counted, since the first run after Qwen is slower"
+    },
+    "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.3.0.json, tooleval-qwen-parallel4-0.2.4-tool-7fa6dd7.json)": {
+      "date": "2026-10-10T01:27:16+0000",
+      "commit": "47b848af, and 287eaf64 for the 0.2.4 run",
+      "release": "0.3.0 as installed (bin/athena-engine, md5 a362d640b916e99acd514abe567ea1f1), and 0.2.4 (md5 654b1afb65441b09da92bed3b09195da) run the same night",
+      "tool": "tool-eval-bench at 7fa6dd7 (v2.3.0+8) --seed 42 --parallel 4 --temperature 0",
+      "note": "both score 91 on the same scenarios, and 0.3.0 scores 91 again on a second run; 0.2.4's 93 (tooleval-qwen-parallel4-0.2.4.json) was measured on 2026-09-27 with tool-eval-bench 2.7.0, which was not on the machine this time"
+    },
+    "DeepSeek V4.1 Flash": {
+      "date": "2026-10-10T00:50:00+0000",
+      "commit": "47b848af",
+      "release": "0.3.0",
+      "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
+      "launcher": "athena-engine.sh of the 0.3.0 release, context 16384, streamed from the internal NVMe drive",
+      "method": "two throw-away prompts, then an 8,400-token Italian prompt and 256 tokens at temperature 0, with the read counts of an earlier run; the restore figures are a 4,935-token ledger asked cold, then again after a restart from its disk checkpoint"
     },
     "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.2.4.json)": {
       "date": "2026-09-27T13:30:10+0000",

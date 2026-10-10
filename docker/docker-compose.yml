@@ -6,16 +6,16 @@
 # several, uncomment one of the environment blocks below.
 services:
   athena-engine:
-    image: ghcr.io/xangel82/athena-engine:0.2.4
+    image: ghcr.io/xangel82/athena-engine:0.3.0
     container_name: athena-engine
     restart: unless-stopped
     ports:
       - "30007:30007"
     # What the engine runs is yours to choose.  The image starts DeepSeek
     # V4 Flash; uncomment one of these blocks for Qwen3.8 Flash Next, for
-    # DeepSeek V4 Flash Vision-Exp, or for several — then a conversation
-    # switches between them by writing "%switch qwen", "%switch deepseek"
-    # or "%switch visio".
+    # DeepSeek V4 Flash Vision-Exp, for DeepSeek V4.1 Flash, or for several
+    # — then a conversation switches between them by writing "%switch qwen",
+    # "%switch deepseek", "%switch visio" or "%switch deepseek4.1".
     #
     # Qwen3.8 Flash Next instead:
     # environment:
@@ -29,7 +29,12 @@ services:
     #   ATHENA_DRAFT: /models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
     #   ATHENA_MMPROJ: /models/DeepSeek-V4-Flash-Vision-Encoder.gguf
     #
-    # All three, switchable while it runs:
+    # DeepSeek V4.1 Flash instead, larger than the machine and read from the
+    # SSD the models folder is on — keep that folder on a fast local drive:
+    # environment:
+    #   ATHENA_MODEL: /models/DeepSeek-V4.1-Flash-Q2.gguf
+    #
+    # All three, switchable while it runs, and V4.1 too if you have it:
     # environment:
     #   ATHENA_MODEL: /models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
     #   ATHENA_DRAFT: /models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
@@ -39,6 +44,7 @@ services:
     #   ATHENA_MODEL_3: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
     #   ATHENA_DRAFT_3: /models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
     #   ATHENA_MMPROJ_3: /models/DeepSeek-V4-Flash-Vision-Encoder.gguf
+    #   ATHENA_MODEL_4: /models/DeepSeek-V4.1-Flash-Q2.gguf
     volumes:
       - ${ATHENA_MODELS_DIR:?set ATHENA_MODELS_DIR}:/models:ro
       - athena-kv:/kv

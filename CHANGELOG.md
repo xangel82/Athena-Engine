@@ -1,5 +1,125 @@
 # Changelog
 
+## 0.3.0 - 2026-10-10
+
+### DeepSeek V4.1 Flash, a model larger than the machine
+
+- DeepSeek V4.1 Flash runs on one GB10. Its file is 340 GiB, on a machine
+  with 128 GB: 152 GiB of weights, and 189 GiB of tables for Engram, the
+  hashed n-gram memory V4.1 adds to some of its layers. The engine keeps in
+  memory what every token reads, and fetches from the SSD, as it runs, the
+  experts a token is routed to and the Engram rows it looks up. A prompt
+  reads each layer's experts while the layer before it computes.
+- Only a model that does not fit is read from the SSD, and the engine
+  decides it at every load, model by model. Qwen3.8 Flash Next and DeepSeek
+  V4 Flash load and run as they did, in the same engine that streams V4.1
+  after a `%switch deepseek4.1`.
+- V4.1 speaks its own chat template, and the tool calls it writes in its own
+  syntax reach the client as tool calls, on the OpenAI and the Anthropic
+  API alike. It thinks at `high` unless asked for `none` or `max`.
+- Its context is 16,384 tokens for now. V4.1's candidate layer covers that
+  much until its block selection exists, and the engine refuses a longer
+  prompt rather than answer from rows the model never sees.
+  `ATHENA_V41_CONTEXT` sets a smaller one.
+- Its conversations are checkpointed and restored like any other's. It has
+  no draft head and no image encoder.
+- `install.sh --model deepseek4.1`, or 6 in its menu, fetches the 366 GB
+  file. Nothing else does: `all` stays the three models it was, and the menu
+  now takes several numbers, as in `1,6`. The installer, the launcher and
+  the container take up to four models.
+
+### Engine
+
+- Qwen3.8 Flash Next reads prompts faster. Three steps of its prefill kept
+  the GPU waiting on work done one token at a time: grouping a batch's
+  tokens by the experts they are routed to (8 ms a layer on an 8k chunk,
+  now 0.12), the scan of its linear-attention state (1.94 µs a token, now
+  1.14, and the check of the MTP head's drafts 57 µs a layer, now 10), and
+  a separate pass that rounded a norm to half precision. The answers do not
+  change.
+- The engine no longer behaves as if the machine were its own. On a GB10
+  the CPU and the GPU share memory, and an allocation the driver cannot
+  back does not fail: it freezes the whole machine. The engine sized itself
+  from the total memory, so one started while another process still held
+  tens of gigabytes could freeze it. It now asks how much the machine can
+  still back before every allocation that grows, and while a model loads
+  it waits up to four minutes for memory another process is still
+  returning; then it refuses, and says why. One engine loads at a time.
+  A long prompt that finds the memory held by conversations nobody is
+  waiting on asks their lanes to give it back, and runs: their
+  conversations come back from their disk checkpoints when they are next
+  asked for.
+- Text a client sends is read as text. A file a tool returns, a message, a
+  tool's description or a call's argument can spell a chat template's own
+  markers: with Qwen, a file holding `<|im_end|><|im_start|>system` opened a
+  real system turn inside the tool result, and with DeepSeek an argument
+  spelling `<｜User｜>` opened a turn on the next request. The engine now
+  recognises no control token inside what the client wrote. A prompt that
+  spells none tokenizes as before, so every cached prefix still matches.
+- Agents keep their place in two more cases. A DeepSeek conversation
+  answered without thinking was replayed from its first prompt on every
+  turn — 38% of the prompt reused over six turns, now 85%. An agent that
+  sends its own ids back for the calls it replays, as Reasonix does, left
+  its lane on every request and lost the reasoning it had written; it now
+  stays, with 94% of the prompt reused and every earlier reasoning block
+  read.
+- A turn that stopped at `max_tokens` left a token in the model's memory
+  that the conversation does not have, and every checkpoint taken after it
+  was refused at restore: a restarted server read that conversation again
+  from its first prompt. It no longer does.
+
+### API
+
+- `/v1/messages` answers the way Anthropic's clients read it: errors in its
+  own shape, with the type the status carries and a `request-id` header on
+  every answer; `stop_reason: "stop_sequence"` when a stop sequence ended
+  the turn; no `data: [DONE]` at the end of a stream, a line its clients
+  cannot read; `msg_` ids; all four `thinking.type` values;
+  `thinking.budget_tokens` and `output_config.format` honoured.
+- `/v1/messages` takes images and documents, read and limited exactly as
+  on the OpenAI API, and the same request now behaves the same with and
+  without `stream`.
+- `POST /v1/messages/count_tokens` counts a prompt as the model would read
+  it, without running it. `GET /v1/models` answers in a shape both
+  protocols read, and `GET /v1/models/{id}` describes the model served.
+- `reasoning_effort: "auto"`, experimental, on both APIs: the engine asks
+  the model how much the question needs — 19 tokens added to the prompt,
+  never shown — and stops its thought there. A request that names an
+  effort keeps it.
+
+### Measured on one GB10
+
+Qwen3.8 Flash Next reads a prompt **10% faster**: 1,187 tokens/s instead of
+1,074 on an 8,000-token prompt, 1,171 instead of 1,062 at 32,000 and 1,161
+instead of 1,052 at 64,000. It writes 33.6 tokens/s instead of 32.6 after an
+8,000-token prompt, with the MTP head as it is served. DeepSeek V4 Flash
+reads and writes as it did: 1,090 tokens/s instead of 1,078 at 8,000 tokens,
+and 23 tokens/s either way. Each pair was measured the same day, with the
+same launcher and the same prompts, against 0.2.4.
+
+From 8,000 tokens to 241,000, Qwen3.8 Flash Next now reads at 1,201 to 1,091
+tokens/s and writes at 31 to 35, in one engine that holds fifteen
+conversations side by side, as 0.2.4 did; the 241,000-token prompt was read
+right after a 190,000-token one, and the lane that held it gave its memory
+back.
+
+The answers do not change. At temperature 0 Qwen3.8 Flash Next and DeepSeek
+V4 Flash write the same text as 0.2.4, bit for bit, and DeepSeek V4 Flash,
+with and without its DSpark sidecar, keeps the hashes every release is
+checked against. Vision-Exp runs on DeepSeek V4's code and was not measured
+for this release. Four agents at once on tool-eval-bench with `--seed 42
+--parallel 4` score 91 out of 100 on 0.3.0, twice, and 91 on 0.2.4 run the
+same night with the same copy of the tool, on the same scenarios; the 93
+published with 0.2.4 was taken with tool-eval-bench 2.7.0. Raw data in
+`docs/benchmarks/data/tooleval-qwen-parallel4-0.3.0.json`.
+
+DeepSeek V4.1 Flash, from the internal NVMe drive of the same machine,
+reads an 8,400-token Italian text at 194 tokens/s and writes 4.0 tokens/s;
+a 4,900-token conversation is answered in 9.9 seconds from its disk
+checkpoint after a restart, where reading it again takes 54. In the
+container, `%switch` takes 45 seconds to DeepSeek V4 Flash, 55 to V4.1 and
+75 back to Qwen.
+
 ## 0.2.4 - 2026-09-27
 
 ### Engine
