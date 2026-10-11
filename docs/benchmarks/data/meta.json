@@ -12,6 +12,16 @@
   "launcher": "athena-engine.sh (Athena-Engine 7086b11)",
   "date": "2026-09-22T06:57:06+0000",
   "measurements": {
+    "disk restore after a restart, saves off the turn, a regenerated first prompt (the CHANGELOG's 0.3.2 figures)": {
+      "date": "2026-10-11",
+      "commit": "c0b459fa",
+      "release": "0.3.2",
+      "binary": "the release build of c0b459fa before strip",
+      "binary_md5": "4f2b8cf12e20d9339abfceb035008c45",
+      "launcher": "athena-engine.sh of the 0.3.1 release, unchanged in 0.3.2, with the production environment and a 40 GB checkpoint store, so the files of one session stay",
+      "method": "the 0.3.1 session (an agent reading I Promessi Sposi through a read_chunk tool, 40,000 characters a call, to a 166,192-token prompt, then the same prompt again, a changed last answer, a changed previous answer); then the engine stopped and started again on the same store, and the changed-last-answer request (178,065 tokens) sent again; then a first prompt of 1,711 tokens asked, another chat, and the first prompt again",
+      "results": "turns 11.4 to 13.2 s with each 10,000-token save written off the turn in 6 to 9 s (0.3.1: 14 to 21 s); a changed last answer 12.6 s (0.3.1: 18 to 20 s); after the restart 142,193 tokens restored from disk in 4.6 s and the 178,065-token prompt answered in 39.8 s, the answer identical to the in-memory one (0.3.1 refused the restore and read the prompt whole: 169 s); the first prompt again went back to its lane and resumed from memory, identical; a rewind point taken in 3.7 to 5.1 ms when it reused the buffer of the one before, 52 ms otherwise"
+    },
     "resuming a repeated or changed turn, Qwen3.8 Flash Next and DeepSeek V4 Flash (the CHANGELOG's 0.3.1 figures)": {
       "date": "2026-10-11",
       "commit": "803b31ae",

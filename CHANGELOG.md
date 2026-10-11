@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.2 - 2026-10-11
+
+### Conversations come back from disk, and saves leave the turn
+
+- A long conversation comes back from its disk checkpoint a piece at a
+  time, and needs the memory of the conversation and little else. 0.3.1
+  read the whole file first and asked for twice that: right after a start,
+  a 166k-token agent session was refused and read again from its first
+  token, in 169 s. 0.3.2 restores 142k of it from disk in 4.6 s and answers
+  the 178k-token prompt in 40 s, with the answer it gives without a
+  restart.
+- Qwen3.8 Flash Next writes its disk checkpoints off the turn, from the
+  rewind point it has just kept: once the engine falls quiet, or alongside
+  the next turn when it does not. A long agent session no longer stops for
+  2 to 5 s every 10,000 tokens: with 12k-token tool results at 166k a turn
+  takes 11.4 to 13.2 s, from 14 to 21 s, and a changed last answer comes in
+  12.6 s, from 18 to 20. DeepSeek V4 Flash still writes its checkpoints in
+  the turn.
+- A chat's first answer regenerated resumes from memory too, once its
+  prompt reaches 512 tokens: the prompt goes back to the lane that holds
+  it, instead of the lane used longest ago, and is not read again.
+- A Qwen rewind point takes 4 to 5 ms when it replaces the one before it
+  (50 to 80 ms in 0.3.1), and a conversation shorter than 512 tokens keeps
+  none: it is read again faster than a point is taken.
+
 ## 0.3.1 - 2026-10-11
 
 ### Agents and chats keep their place

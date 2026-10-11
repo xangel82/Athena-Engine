@@ -224,8 +224,8 @@ in memory:
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.3.1
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.3.1
+   docker pull ghcr.io/xangel82/athena-engine:0.3.2
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.3.2
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```
