@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.3.1 - 2026-10-11
+
+### Agents and chats keep their place
+
+- A conversation whose client sends its last answer back a little
+  differently — an agent harness re-rendering the tool call it made, an
+  edited last message — or asks the same prompt again resumes from the end
+  of its last prompt instead of reading the conversation again. Qwen3.8
+  Flash Next keeps that point in memory at every turn: about 166 MiB a
+  conversation, whatever its length, taken in 50 to 80 ms. On a
+  166k-token agent session the same prompt again answers in 1.3 s, and a
+  changed last answer followed by a 12k-token tool result in 18 to 20 s,
+  12 of them reading the tool result; 0.3.0 read all 166k tokens again, in
+  153 s. The answer is the one the model gives reading the whole
+  conversation from its start.
+- A chat asked the same prompt again, as Open WebUI's Regenerate does,
+  resumes from memory as well once the prompt holds an earlier answer,
+  instead of being read again or restored from its disk checkpoint. Qwen
+  keeps the point at every turn; DeepSeek V4 Flash only at the first long
+  prompt it read, the one checkpoint it keeps with the logits to draw from.
+  A prompt with no answer in its history still goes to the lane used
+  longest ago, as before.
+
+### Fixes
+
+- A tool call left a token in the model's memory twice. When the draft
+  head (Qwen's MTP, DeepSeek's DSpark) had already written the end of the
+  turn that follows a call, the next turn wrote it again: one row more for
+  every call of an agent session. The model read a conversation the client
+  never sent, and none of its checkpoints held: Qwen's save every 10,000
+  tokens failed each time, DeepSeek's were written one row long and refused
+  at restore. A restarted server, or a turn the client changed, read the
+  whole conversation again. DeepSeek's answers in tool sessions now differ
+  slightly from 0.3.0's: they read the conversation as it is.
+- A DeepSeek conversation that went back to one of those checkpoints
+  answered HTTP 500. It now reads its prompt again.
+
 ## 0.3.0 - 2026-10-10
 
 ### DeepSeek V4.1 Flash, a model larger than the machine
