@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.3.3 - 2026-10-12
+
+### DeepSeek's saves leave the turn too
+
+- DeepSeek V4 Flash no longer stops for 12 to 13 s in an agent session
+  that never pauses. A disk checkpoint waits for the engine to fall quiet,
+  and in 0.3.2 the next save queued behind it inside the turn: the turns
+  that saved, at 21k and 32k tokens, took up to 17.6 s instead of 4.4. In
+  0.3.3 a save is handed over in under 20 ms and every turn of the same
+  session takes 4.0 to 4.6 s. A newer save of a conversation replaces one
+  still waiting, and when two other conversations already wait, the save
+  moves to a later turn.
+- Same answers and same speed as 0.3.2: the DeepSeek V4 hashes are
+  unchanged, and prefill and decode at 8k and 32k match 0.3.2 run for run,
+  for both models. A checkpoint written while an answer is still being
+  generated costs DeepSeek V4 Flash about 0.2 s, once (160 MB written in
+  0.4 s), and Qwen3.8 Flash Next 0.04 s (a 124k-token checkpoint, about
+  3.7 GB, written in 4.2 s).
+- DeepSeek V4.1 Flash fills its arena of experts from the SSD while the
+  engine waits, and 0.3.2's stalls gave it that time inside the turns.
+  Requests sent back to back right after a start now run with part of the
+  arena still empty until the engine pauses; after a two-minute pause a
+  resumed turn takes 2.1 s, as in 0.3.2.
+
 ## 0.3.2 - 2026-10-11
 
 ### Conversations come back from disk, and saves leave the turn

@@ -12,6 +12,16 @@
   "launcher": "athena-engine.sh (Athena-Engine 7086b11)",
   "date": "2026-09-22T06:57:06+0000",
   "measurements": {
+    "DeepSeek's saves off the turn, and the speed with a write in flight (the CHANGELOG's 0.3.3 figures)": {
+      "date": "2026-10-12",
+      "commit": "7c0457b2",
+      "release": "0.3.3",
+      "binary": "the release build of 7c0457b2 before strip for the session and the hashes; for the speed comparison the build of c1e5c698 with the same release flags (7c0457b2 only adds the release notes), md5 c6d0d04a3a648487a37c02f39fd7c181, against the installed 0.3.2, md5 b713d69bbec01f8c0c3a48a76ddd662e",
+      "binary_md5": "c67c6939d53a114a2479820a72926bf6",
+      "launcher": "athena-engine.sh of the 0.3.1 release, unchanged in 0.3.2 and 0.3.3, with the production environment",
+      "method": "the 0.3.2 gate session: an agent reading I Promessi Sposi through a read_chunk tool, 8,000 characters a call, to a 32,277-token prompt with no pause between turns, saving at 10k, 21k and 32k tokens; then the engine restarted on the same store and the changed previous answer (32,279 tokens) sent again. Speed: the two builds alternated B A A B for DeepSeek V4 Flash and B A for Qwen3.8 Flash Next, two 8k warm-ups, the prefill of 8k and 32k twice, 256 tokens decoded after each at temperature 0; then a fresh prompt (34k tokens for DeepSeek, 124k for Qwen) asking for the text back, 2,000 or 4,000 tokens, whose prefix checkpoint is written about 30 s into the answer, and the same request again with nothing to write: the stretch of text the write covered, timed in both",
+      "results": "DeepSeek turns 4.0 to 4.6 s with saves handed over in 0.8 to 18 ms (0.3.2, same session: 12.5 and 13.1 s in the turn, the 32k turn 17.6 s); after the restart the 32,279-token prompt answered in 2.6 s from the 21,557-token file, identical to the answer before it. V4 hashes d6dd88a9 / 8cd9e4ff / fd76db9f, ordinary and DSpark. DeepSeek prefill 1,093 to 1,112 tokens/s and decode 23.0 to 23.2 for both builds, Qwen prefill 1,169 to 1,190 and decode 33.1 to 33.7 for both, the same text. Write in flight: DeepSeek 160 MB in 0.39 s, +0.21 s on the stretch it covered, for 0.3.2 and the fix alike; Qwen about 3.7 GB in 4.2 s, +0.04 s (+0.9%, against 0.1% in the 10 s before). DeepSeek V4.1 Flash, the gate's restore in memory (a question, another long prompt, the question again, a follow-up): back to back after a start 35.5 / 25.8 / 8.2 / 14.1 s, the arena ending with 660 experts placed (0.3.2: 55.5 / 42.3 / 2.1 / 3.5 s, its saves holding the turns while the arena filled, 8,161 placed); with 120 s of pause before the last two, 2.1 and 3.5 s, 8,224 placed"
+    },
     "disk restore after a restart, saves off the turn, a regenerated first prompt (the CHANGELOG's 0.3.2 figures)": {
       "date": "2026-10-11",
       "commit": "c0b459fa",
