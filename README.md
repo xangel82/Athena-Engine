@@ -39,7 +39,7 @@ personal use, research, education, and developers and small companies at work.
 
 ## What it does
 
-- **Long context that stays fast.** Prefill holds 920–1,200 tokens/s from 8k
+- **Long context that stays fast.** Prefill holds 920–1,230 tokens/s from 8k
   all the way to the full 256k context, and generation does not slow down as
   the conversation grows.
 - **A conversation is not read twice.** Every model keeps its context on
@@ -116,12 +116,12 @@ thirty-two times the context for at most a sixth of the speed.
 
 | Prompt | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
 |---|---|---|---|
-| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,201 tokens/s |
-| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,185 tokens/s |
-| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,168 tokens/s |
-| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,144 tokens/s |
-| 196k | 1,025 tokens/s | 998 tokens/s | 1,119 tokens/s |
-| 256k | 995 tokens/s | 919 tokens/s | 1,091 tokens/s |
+| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,230 tokens/s |
+| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,209 tokens/s |
+| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,199 tokens/s |
+| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,177 tokens/s |
+| 196k | 1,025 tokens/s | 998 tokens/s | 1,128 tokens/s |
+| 256k | 995 tokens/s | 919 tokens/s | 1,122 tokens/s |
 
 A quarter of a million tokens — a 700-page book — is read in less than five
 minutes.
@@ -139,12 +139,12 @@ between neighbouring points is the run-to-run variation, not a trend.
 
 | Context | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
 |---|---|---|---|
-| 8k | 22.5 tokens/s | 16.6 tokens/s | 33.6 tokens/s |
-| 32k | 20.3 tokens/s | 19.0 tokens/s | 33.0 tokens/s |
-| 64k | 19.8 tokens/s | 24.2 tokens/s | 34.7 tokens/s |
-| 128k | 21.4 tokens/s | 24.3 tokens/s | 32.2 tokens/s |
-| 196k | 19.2 tokens/s | 18.3 tokens/s | 32.2 tokens/s |
-| 256k | 19.6 tokens/s | 21.1 tokens/s | 31.3 tokens/s |
+| 8k | 22.5 tokens/s | 16.6 tokens/s | 35.7 tokens/s |
+| 32k | 20.3 tokens/s | 19.0 tokens/s | 34.4 tokens/s |
+| 64k | 19.8 tokens/s | 24.2 tokens/s | 36.0 tokens/s |
+| 128k | 21.4 tokens/s | 24.3 tokens/s | 33.9 tokens/s |
+| 196k | 19.2 tokens/s | 18.3 tokens/s | 33.7 tokens/s |
+| 256k | 19.6 tokens/s | 21.1 tokens/s | 33.4 tokens/s |
 
 Qwen is the fastest because it is the smallest model; DeepSeek V4 Flash
 answers at a steady twenty tokens a second whether the conversation holds
@@ -191,7 +191,9 @@ The same holds with several agents at once. Four conversations in parallel,
 each with a worker lane of its own, and Qwen3.8 Flash Next scored **93 out
 of 100** on the tool-eval-bench 2.7.0 run with `--parallel 4` (0.2.4). On
 0.3.0 the copy of the tool at hand scores 91 — and so does 0.2.4 run with it
-the same night, on the same scenarios.
+the same night, on the same scenarios. 0.3.4, which drafts three tokens when
+a conversation writes alone, scores 92 with that copy: the same scenarios,
+one more passed in full.
 
 The full reports, scenario by scenario, are in
 [docs/benchmarks/data](docs/benchmarks/data).
@@ -224,8 +226,8 @@ in memory:
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.3.3
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.3.3
+   docker pull ghcr.io/xangel82/athena-engine:0.3.4
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.3.4
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```

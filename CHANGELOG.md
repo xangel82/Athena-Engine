@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.4 - 2026-10-13
+
+### Qwen reads and writes faster
+
+- Qwen3.8 Flash Next reads a prompt 3.4 to 3.6 per cent faster: 1,226 to
+  1,235 tokens/s at 8k, from 1,186 to 1,188, and 1,210 to 1,215 at 32k,
+  from 1,171 to 1,172. The routed experts of a prompt chunk are now
+  multiplied over as many column tiles as the busiest expert needs, instead
+  of one for every token of the chunk: on an 8k prompt nearly all of the
+  156,160 thread blocks launched for each expert projection found nothing
+  to do. Every tile computed is the one 0.3.3 computed, bit for bit.
+- Qwen3.8 Flash Next writes faster when one conversation has the machine to
+  itself: its MTP head drafts three tokens instead of two, and goes back to
+  two as soon as another conversation is generating, where a third draft
+  costs the others more than it returns. A draft is computed only while the
+  chain before it has at least a 60 per cent chance of being kept (30 in
+  0.3.3). Alone, code and JSON come 7 per cent faster, an explanation 5, a
+  summary after an 8k or a 32k prompt 6 and 4; free prose, where few drafts
+  survive, is unchanged. Two and four conversations at once gain 1.4 and
+  1.6 per cent.
+- The answers are the model's: every draft is checked by the whole model,
+  and a single prompt gets the same text as in 0.3.3, byte for byte, alone
+  or next to other conversations. Over a long session of many turns the
+  text can part at a near tie, because a token at the end of a turn may now
+  be computed while reading the next prompt instead of while writing, as it
+  already could after a conversation came back from disk. tool-eval-bench
+  with four agents at once (seed 42) scores 92, against 91 for 0.3.3 on the
+  same copy of the tool: the same scenarios, one more passed in full, none
+  worse.
+- DeepSeek V4 Flash and DeepSeek V4.1 Flash are unchanged: the same hashes
+  as 0.3.3.
+
 ## 0.3.3 - 2026-10-12
 
 ### DeepSeek's saves leave the turn too

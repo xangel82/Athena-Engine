@@ -12,6 +12,25 @@
   "launcher": "athena-engine.sh (Athena-Engine 7086b11)",
   "date": "2026-09-22T06:57:06+0000",
   "measurements": {
+    "Qwen3.8 Flash Next's speed and answers, 0.3.4 against 0.3.3 (the CHANGELOG's 0.3.4 figures)": {
+      "date": "2026-10-13",
+      "commit": "691d4988",
+      "release": "0.3.4",
+      "binary": "the release build of 691d4988 before strip (packaged md5 793c1498a5d8a5b97f75e2d7960a0ce2) against the installed 0.3.3, md5 95b49f6db0e3572cb565f7521ce8a21d",
+      "binary_md5": "ecd388cec8523a133cb69d80f6bea62c",
+      "launcher": "athena-engine.sh of the 0.3.1 release, unchanged up to 0.3.4, one model, MTP head and vision encoder loaded, no checkpoint store",
+      "method": "the two builds alternated B A A B: two 8k warm-ups, the prefill of 8k and 32k twice, 256 tokens at temperature 0 after each; four short prompts answered in 600 tokens (a story in Italian, a Python class with its tests, a JSON list, an explanation in English); the same prompts as two and four conversations at once, twice each; the hash of every text",
+      "results": "prefill 1,226 to 1,235 tokens/s at 8k (0.3.3: 1,186 to 1,188) and 1,210 to 1,215 at 32k (1,171 to 1,172); decode after 8k 35.7 (33.6), after 32k 34.4 (33.0); the story 29.1 (29.0), the code 41.1 (38.4), the JSON 40.9 (38.1), the explanation 37.6 (35.7); two conversations 38.5 (38.0), four 45.7 to 46.5 (45.3 to 45.4), the first burst of four after a start 42.2 (45.0 to 45.2), a figure that also came out 43.0 against 40.8 in an earlier pair; every text the same as 0.3.3's. The gate's agent session of 166k tokens parts from 0.3.3's at the second turn: the frontier a turn keeps falls one token apart with three drafts, and that token is computed while reading the next prompt; a log of every verification shows the rows of a four-row verification equal to those of a three-row one, byte for byte"
+    },
+    "tool calling with four agents at once, Qwen3.8 Flash Next (tooleval-qwen-parallel4-0.3.4.json)": {
+      "date": "2026-10-13T11:46:03+0000",
+      "commit": "691d4988",
+      "release": "0.3.4",
+      "binary": "the release build of 691d4988 before strip",
+      "binary_md5": "ecd388cec8523a133cb69d80f6bea62c",
+      "tool": "tool-eval-bench at 7fa6dd7 (v2.3.0+8) --seed 42 --parallel 4 --temperature 0, the copy of the 0.3.0 runs",
+      "note": "92, 127 points of 138; 0.3.3 and its build with the narrow expert grid alone score 91, 125 points, run with the same copy on 2026-10-13; the same scenarios fall short in all three, except TC-40, which 0.3.4 passes in full"
+    },
     "DeepSeek's saves off the turn, and the speed with a write in flight (the CHANGELOG's 0.3.3 figures)": {
       "date": "2026-10-12",
       "commit": "7c0457b2",
@@ -53,24 +72,24 @@
       "binary_md5": "87cc114409b3624bd96d9b78994a5463"
     },
     "prefill for Qwen3.8 Flash Next": {
-      "date": "2026-10-10T01:05:00+0000",
-      "commit": "47b848af",
-      "release": "0.3.0",
-      "binary": "the build of 47b848af before strip, the release candidate: the 0.3.0 release (2402f6ce, packaged md5 a2f0f972a14bfb23f5a0d17f43ce537d) changes only DeepSeek V4.1's prompt",
-      "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
-      "binary_bytes": 53195856,
-      "launcher": "athena-engine.sh of the 0.3.0 release, MTP head and vision encoder loaded",
-      "method": "two throw-away 8k prompts first, so the lanes are warm; then 8k to 256k in order in the same engine, each prompt cut from Manzoni's I Promessi Sposi at 3.3 characters a token and opened by a fresh nonce"
+      "date": "2026-10-13",
+      "commit": "691d4988",
+      "release": "0.3.4",
+      "binary": "the release build of 691d4988 before strip (packaged md5 793c1498a5d8a5b97f75e2d7960a0ce2)",
+      "binary_md5": "ecd388cec8523a133cb69d80f6bea62c",
+      "binary_bytes": 53213160,
+      "launcher": "athena-engine.sh of the 0.3.1 release, unchanged up to 0.3.4, MTP head and vision encoder loaded",
+      "method": "two throw-away 8k prompts first, so the lanes are warm; then 8k to 256k in order in the same engine, once each, each prompt cut from Manzoni's I Promessi Sposi at 3.3 characters a token and opened by a fresh nonce"
     },
     "generation for Qwen3.8 Flash Next": {
-      "date": "2026-10-10T01:20:00+0000",
-      "commit": "47b848af",
-      "release": "0.3.0",
-      "binary": "the build of 47b848af before strip, the release candidate: the 0.3.0 release (2402f6ce, packaged md5 a2f0f972a14bfb23f5a0d17f43ce537d) changes only DeepSeek V4.1's prompt",
-      "binary_md5": "8e18f813e2e9ef7234763ed6b8a4b1d7",
-      "binary_bytes": 53195856,
-      "launcher": "athena-engine.sh of the 0.3.0 release, MTP head and vision encoder loaded",
-      "method": "256 tokens at temperature 0 after each prompt of the prefill series, asked to summarize it, timed from the first token"
+      "date": "2026-10-13",
+      "commit": "691d4988",
+      "release": "0.3.4",
+      "binary": "the release build of 691d4988 before strip (packaged md5 793c1498a5d8a5b97f75e2d7960a0ce2)",
+      "binary_md5": "ecd388cec8523a133cb69d80f6bea62c",
+      "binary_bytes": 53213160,
+      "launcher": "athena-engine.sh of the 0.3.1 release, unchanged up to 0.3.4, MTP head and vision encoder loaded",
+      "method": "256 tokens at temperature 0 after each prompt of the prefill series, asked to summarize it, timed from the first token; one conversation, so the MTP head drafts up to three tokens"
     },
     "0.3.0 against 0.2.4, Qwen3.8 Flash Next and DeepSeek V4 Flash (the CHANGELOG's pairs)": {
       "date": "2026-10-09T22:41:00+0000",
