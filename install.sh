@@ -10,6 +10,7 @@
 #   ./install.sh --model qwen --dir /data/models
 #   ./install.sh --model qwen --from /mnt/ggufs      use files already here
 #   ./install.sh --model deepseek --verify           check what is already there
+#   ./install.sh --model qwen --voice        and the voice: speech in and out
 #
 # Files already on the machine are never downloaded again. Without --from the
 # usual places are searched — your home, /models, /data/models and the like,
@@ -24,6 +25,7 @@ FROM_DIR=""
 CHOICE=""
 ASSUME_YES=0
 VERIFY=0
+VOICE=""
 
 die() { printf 'install: %s\n' "$*" >&2; exit 1; }
 say() { printf '%s\n' "$*"; }
@@ -48,8 +50,9 @@ while [ $# -gt 0 ]; do
     --dir) MODELS_DIR="${2:-}"; shift 2 ;;
     --from) FROM_DIR="${2:-}"; shift 2 ;;
     --verify) VERIFY=1; shift ;;
+    --voice) VOICE=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
-    -h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -103,6 +106,56 @@ EOF
 deepseek41_files() {
   cat <<EOF
 $DEEPSEEK41_MODEL|$DEEPSEEK41_REPO/$DEEPSEEK41_MODEL|366 GB|model
+EOF
+}
+
+# The voice: the Qwen Team's speech models as they publish them, at the
+# revisions the engine was validated with, converted here into the files the
+# engine reads by the converter the release ships (qwen3-voice-convert) —
+# as the DSpark sidecar is built.  Each line: <path in the repository>|<bytes>.
+QWEN_HF="$HF/Qwen"
+TTS_REPO="Qwen3-TTS-12Hz-1.7B-Base"
+TTS_REV="fd4b254389122332181a7c3db7f27e918eec64e3"
+ASR_REPO="Qwen3-ASR-1.7B"
+ASR_REV="7278e1e70fe206f11671096ffdd38061171dd6e5"
+TTS_GGUF="Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf"
+TTS_PREDICTOR="Qwen3-TTS-12Hz-1.7B-Base-Q8_0-predictor.gguf"
+ASR_GGUF="Qwen3-ASR-1.7B-Q8_0.gguf"
+# What the converter writes from these revisions on a GB10.  Another result
+# means another build of the converter or other weights; it is said, and the
+# file is kept.
+TTS_GGUF_SHA="5463ba6b4ff81b0fbccd4d632e305f3d88a32755abe0fd8b85432d9486fc7cfa"
+TTS_PREDICTOR_SHA="08a41d0cc245c8e6bc66e70917bf1d6ce216d57832aacf72fa52380c5462a914"
+ASR_GGUF_SHA="048df1a7eae20d6a029ba58ee4613935568cb26dfbf51c4d58ecf41aa43de263"
+
+tts_sources() {
+  cat <<EOF
+config.json|4494
+generation_config.json|245
+merges.txt|1671839
+preprocessor_config.json|127
+tokenizer_config.json|7344
+vocab.json|2776833
+speech_tokenizer/config.json|2336
+speech_tokenizer/configuration.json|76
+speech_tokenizer/preprocessor_config.json|234
+speech_tokenizer/model.safetensors|682293092
+model.safetensors|3857413744
+EOF
+}
+
+asr_sources() {
+  cat <<EOF
+chat_template.json|1161
+config.json|6194
+generation_config.json|142
+merges.txt|1671853
+model.safetensors.index.json|64821
+preprocessor_config.json|330
+tokenizer_config.json|12487
+vocab.json|2776833
+model-00002-of-00002.safetensors|478200688
+model-00001-of-00002.safetensors|4220320824
 EOF
 }
 
@@ -180,6 +233,144 @@ build_dspark() {
   say "  the sidecar could not be built; DeepSeek will run without"
   say "  speculative decoding."
   return 1
+}
+
+# ------------------------------------------------------------------- voice
+# A tool the release ships, looked for where deepseek4-quantize is.
+release_tool() {
+  local name="$1" here candidate
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  for candidate in "$PWD/athena-engine/bin/$name" "$here/athena-engine/bin/$name" "$here/bin/$name"; do
+    [ -x "$candidate" ] && { printf '%s\n' "$candidate"; return 0; }
+  done
+  command -v "$name" 2>/dev/null || true
+}
+
+human_size() {
+  awk -v b="$1" 'BEGIN { if (b >= 1e9) printf "%.1f GB", b / 1e9; else if (b >= 1e6) printf "%.1f MB", b / 1e6;
+                         else printf "%d KB", (b + 999) / 1000 }'
+}
+
+# A repository's files in one folder, as the converter reads them: a folder of
+# that name already on the machine with every file at its size, or else the
+# one under the models directory, where what is missing is downloaded.  The
+# folder is left in VOICE_SOURCE.
+VOICE_SOURCE=""
+voice_repository() {  # repository, revision, list
+  local repo="$1" rev="$2" list="$3" places place candidate path bytes ok dir failed=0
+  VOICE_SOURCE=""
+  if [ -n "$FROM_DIR" ]; then places="$FROM_DIR"; else places="$(default_places)"; fi
+  while IFS= read -r place; do
+    [ -n "$place" ] || continue
+    while IFS= read -r candidate; do
+      [ -n "$candidate" ] || continue
+      ok=1
+      while IFS='|' read -r path bytes; do
+        [ -n "$path" ] || continue
+        if [ ! -f "$candidate/$path" ] || [ "$(wc -c < "$candidate/$path" | tr -d ' ')" != "$bytes" ]; then
+          ok=0
+          break
+        fi
+      done <<< "$list"
+      if [ "$ok" = 1 ]; then VOICE_SOURCE="$candidate"; break 2; fi
+    done < <(find "$place" -maxdepth 4 -type d -name "$repo" 2>/dev/null)
+  done <<< "$places"
+  if [ -n "$VOICE_SOURCE" ]; then
+    say "  found $repo in $(dirname "$VOICE_SOURCE")"
+    if [ "$VERIFY" = 1 ]; then
+      while IFS='|' read -r path bytes; do
+        [ -n "$path" ] || continue
+        verify_file "$VOICE_SOURCE/$path" "$QWEN_HF/$repo/resolve/$rev/$path" || failed=1
+      done <<< "$list"
+    fi
+    return $failed
+  fi
+  dir="$MODELS_DIR/voice/$repo"
+  while IFS='|' read -r path bytes; do
+    [ -n "$path" ] || continue
+    if [ -f "$dir/$path" ] && [ "$(wc -c < "$dir/$path" | tr -d ' ')" = "$bytes" ]; then
+      continue
+    fi
+    fetch "$dir/$path" "$QWEN_HF/$repo/resolve/$rev/$path" "$(human_size "$bytes")" || failed=1
+  done <<< "$list"
+  [ "$failed" = 0 ] && VOICE_SOURCE="$dir"
+  return $failed
+}
+
+# One speech model converted beside the others.  The talker of the synthesizer
+# names its predictor's file, so both are written under their final names in
+# a folder of their own and moved into place together once whole.
+convert_voice() {  # tool, --tts|--asr, source, revision, folder, file, sha256[, second file, its sha256]
+  local tool="$1" kind="$2" src="$3" rev="$4" dir="$5" file="$6" want="$7" second="${8:-}" want2="${9:-}"
+  local work="$dir/.converting" f have
+  rm -rf "$work" && mkdir -p "$work" || return 1
+  say "  converting $file — a minute or two"
+  if ! "$tool" "$kind" "$src" --out "$work/$file" --type q8_0 --revision "$rev" > "$work/convert.log" 2>&1; then
+    tail -3 "$work/convert.log" | sed 's/^/  /'
+    rm -rf "$work"
+    say "  $file could not be converted"
+    return 1
+  fi
+  for f in "$file" ${second:+"$second"}; do
+    [ -f "$work/$f" ] || { say "  the converter wrote no $f"; rm -rf "$work"; return 1; }
+  done
+  if command -v sha256sum >/dev/null; then
+    have="$(sha256sum "$work/$file" | cut -d' ' -f1)"
+    [ "$have" = "$want" ] || say "  note: $file is not byte for byte the reference conversion"
+    if [ -n "$second" ]; then
+      have="$(sha256sum "$work/$second" | cut -d' ' -f1)"
+      [ "$have" = "$want2" ] || say "  note: $second is not byte for byte the reference conversion"
+    fi
+  fi
+  for f in "$file" ${second:+"$second"}; do mv -f "$work/$f" "$dir/$f"; done
+  rm -rf "$work"
+  say "  converted $file"
+  return 0
+}
+
+install_voice() {
+  local dir="$MODELS_DIR/voice" tool free found failed=0
+  say ""
+  say "Voice: Qwen3-TTS-12Hz-1.7B-Base speaks, Qwen3-ASR-1.7B listens"
+  mkdir -p "$dir" || return 1
+  # Converted already, here or wherever models are searched for.
+  found="$dir/$TTS_GGUF"; [ -f "$found" ] || found="$(locate_file "$TTS_GGUF")"
+  if [ -n "$found" ] && [ -f "$(dirname "$found")/$TTS_PREDICTOR" ]; then
+    say "  have  $TTS_GGUF"
+    ROLE_tts="$found"
+  fi
+  found="$dir/$ASR_GGUF"; [ -f "$found" ] || found="$(locate_file "$ASR_GGUF")"
+  if [ -n "$found" ]; then
+    say "  have  $ASR_GGUF"
+    ROLE_asr="$found"
+  fi
+  [ -n "$ROLE_tts" ] && [ -n "$ROLE_asr" ] && return 0
+  tool="$(release_tool qwen3-voice-convert)"
+  if [ -z "$tool" ]; then
+    say "  the speech converter (qwen3-voice-convert) is not in this release;"
+    say "  the engine will run without a voice."
+    return 1
+  fi
+  free="$(free_gb "$dir")"
+  [ -n "$free" ] && say "  room on $dir: ${free} GB free (the voice takes about 14 GB)"
+  if [ -z "$ROLE_tts" ]; then
+    if voice_repository "$TTS_REPO" "$TTS_REV" "$(tts_sources)" &&
+       convert_voice "$tool" --tts "$VOICE_SOURCE" "$TTS_REV" "$dir" "$TTS_GGUF" "$TTS_GGUF_SHA" \
+                     "$TTS_PREDICTOR" "$TTS_PREDICTOR_SHA"; then
+      ROLE_tts="$dir/$TTS_GGUF"
+    else
+      failed=1
+    fi
+  fi
+  if [ -z "$ROLE_asr" ]; then
+    if voice_repository "$ASR_REPO" "$ASR_REV" "$(asr_sources)" &&
+       convert_voice "$tool" --asr "$VOICE_SOURCE" "$ASR_REV" "$dir" "$ASR_GGUF" "$ASR_GGUF_SHA"; then
+      ROLE_asr="$dir/$ASR_GGUF"
+    else
+      failed=1
+    fi
+  fi
+  return $failed
 }
 
 # ------------------------------------------------------------------ machine
@@ -308,6 +499,10 @@ SLOT_NAMES=()
 # Not a model file: the folder the DSpark weight shards were found in, which
 # the sidecar is built from and which belongs to neither slot.
 ROLE_shards=""
+# The speech models, which belong to no slot either: the engine serves them
+# beside whichever model answers.
+ROLE_tts=""
+ROLE_asr=""
 
 remember() {
   if [ "$1" = shards ]; then
@@ -455,6 +650,8 @@ env_file() {
     [ -n "$ROLE_model4" ] && say "export ATHENA_MODEL_4=$ROLE_model4"
     [ -n "$ROLE_draft4" ] && say "export ATHENA_DRAFT_4=$ROLE_draft4"
     [ -n "$ROLE_mmproj4" ] && say "export ATHENA_MMPROJ_4=$ROLE_mmproj4"
+    [ -n "$ROLE_tts" ] && say "export ATHENA_TTS_MODEL=$ROLE_tts"
+    [ -n "$ROLE_asr" ] && say "export ATHENA_ASR_MODEL=$ROLE_asr"
   } > "$out"
   if [ -z "$ROLE_model" ]; then
     say ""
@@ -534,6 +731,17 @@ main() {
       [ -n "$CHOICE" ] || CHOICE=qwen
     fi
   fi
+  if [ -z "$VOICE" ]; then
+    VOICE=0
+    if [ "$ASSUME_YES" != 1 ]; then
+      say ""
+      say "Also the voice? The engine then speaks and listens (OpenAI's audio routes):"
+      say "the Qwen Team's speech models, 9.3 GB to download and converted here."
+      printf 'Voice [y/N]: '
+      read -r answer
+      case "$answer" in y|Y|yes|si|sì) VOICE=1 ;; esac
+    fi
+  fi
 
   # Qwen first in both and all: it is the one the engine starts with, and
   # the one a %switch comes back to.  A list is taken in its own order.
@@ -563,6 +771,9 @@ main() {
     SLOT=$((SLOT + 1))
   done
   SLOT=1
+  if [ "$VOICE" = 1 ]; then
+    install_voice || failed=1
+  fi
 
   env_file || failed=1
   if [ "$failed" != 0 ]; then
@@ -580,6 +791,11 @@ main() {
     say "The models are in place. The engine starts with ${SLOT_NAMES[0]} and a"
     say "conversation calls another in by writing, as a message:"
     for one in "${SLOT_NAMES[@]:1}"; do say "  %switch $one"; done
+  fi
+  if [ -n "$ROLE_tts$ROLE_asr" ]; then
+    say ""
+    say "The voice is in place: the engine speaks at /v1/audio/speech and listens at"
+    say "/v1/audio/transcriptions, loading each the first time it is asked."
   fi
 }
 

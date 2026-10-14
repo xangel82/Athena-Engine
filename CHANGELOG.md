@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.4.0 - not yet published
+
+### Athena speaks and listens
+
+- Two of OpenAI's audio routes, served beside whichever model answers:
+  `POST /v1/audio/speech` speaks a text, `POST /v1/audio/transcriptions`
+  writes down what is said. The models are the Qwen Team's
+  Qwen3-TTS-12Hz-1.7B-Base and Qwen3-ASR-1.7B, converted on your machine
+  from the weights their authors publish (`install.sh --voice`, with the
+  release's own `qwen3-voice-convert`), and run by the engine on the GB10
+  like the text models. Each is loaded the first time it is asked for, in
+  the memory the engine accounts for, and goes away after five minutes
+  without a request; when the memory is not there the route answers 503 and
+  no conversation loses any. A `%switch` keeps them.
+- Speech comes as WAV or raw PCM, whole or as it is made: chunked PCM, or
+  `stream_format: "sse"` events. The first audio of a stream leaves the
+  engine in 0.06 s (0.08 to 0.10 s at a client on the same machine), and a
+  12-second sentence is ready whole in 2.7 s, 4.6 times faster than it
+  plays. A stream is the same audio as the whole answer, and the same seed
+  gives the same bytes.
+- The release ships a voice, f-elegante: Italian, synthetic, designed from a
+  text description, with no real speaker behind it. Another voice made for
+  the same model can be named with `ATHENA_TTS_VOICE`.
+- A lexicon says how words are said (`profiles/speech-lexicon.tsv`, one line
+  a word): the Italian voice says "Athena" as Italian says it. A
+  transcription that brings no `prompt` is given "Athena" as its context
+  (`ATHENA_ASR_PROMPT`), so the name comes back spelled right.
+- Transcriptions answer as json, text or verbose_json: 12 seconds of speech
+  in 0.6 s.
+- The text models are unchanged: DeepSeek's hashes and Qwen's texts are
+  0.3.4's. <!-- TODO(0.4.0): speed against 0.3.4 -->
+
 ## 0.3.4 - 2026-10-13
 
 ### Qwen reads and writes faster
