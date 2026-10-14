@@ -39,6 +39,9 @@
 #                                                  empty string disables it)
 #   ATHENA_KV_SPACE_MB    durable KV budget in MB (default 16384)
 #   ATHENA_STATE_DIR      runtime state dir       (default ~/.local/state)
+#   ATHENA_MAX_LANES      at most this many conversations generate at once;
+#                         the others wait in the queue (default: as many as
+#                         the machine holds)
 # Voice, beside whichever model answers (OpenAI's audio routes); each speech
 # model is loaded at its first request and unloaded after a while without one:
 #   ATHENA_TTS_MODEL      speech synthesizer, the Qwen3-TTS GGUF converted
@@ -228,6 +231,7 @@ if [ -n "${ATHENA_MODEL_2:-}${ATHENA_MODEL_3:-}${ATHENA_MODEL_4:-}" ]; then
 fi
 
 [ "$streams" = 0 ] || args+=(--ssd-streaming)
+[ -z "${ATHENA_MAX_LANES:-}" ] || args+=(--max-lanes "$ATHENA_MAX_LANES")
 
 kv_dir="${ATHENA_KV_DIR-$HOME/.cache/athena-engine/kv}"
 if [ -n "$kv_dir" ]; then
