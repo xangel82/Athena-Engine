@@ -39,6 +39,24 @@
 #                                                  empty string disables it)
 #   ATHENA_KV_SPACE_MB    durable KV budget in MB (default 16384)
 #   ATHENA_STATE_DIR      runtime state dir       (default ~/.local/state)
+# Voice, beside whichever model answers (OpenAI's audio routes); each speech
+# model is loaded at its first request and unloaded after a while without one:
+#   ATHENA_TTS_MODEL      speech synthesizer, the Qwen3-TTS GGUF converted
+#                         from the authors' weights (its -predictor.gguf lies
+#                         beside it): the engine then answers /v1/audio/speech
+#   ATHENA_TTS_VOICE      the voice it speaks with, with ATHENA_TTS_VOICE_2 to
+#                         _4 for more (default: the voices in voices/)
+#   ATHENA_TTS_DEFAULT_VOICE  the voice a request that names none gets
+#   ATHENA_TTS_LEXICON    how words are said (default profiles/speech-lexicon.tsv,
+#                         empty string disables it)
+#   ATHENA_ASR_MODEL      speech recognizer, the Qwen3-ASR GGUF converted from
+#                         the authors' weights: the engine then answers
+#                         /v1/audio/transcriptions
+#   ATHENA_ASR_PROMPT     names and terms a transcription without a prompt is
+#                         given, spelled as they should come out (default
+#                         Athena, empty string disables it)
+#   ATHENA_VOICE_IDLE     seconds a speech model stays loaded without a
+#                         request (default 300; 0 keeps it once loaded)
 # Extra arguments are passed to the server unchanged.
 set -euo pipefail
 
@@ -215,6 +233,42 @@ kv_dir="${ATHENA_KV_DIR-$HOME/.cache/athena-engine/kv}"
 if [ -n "$kv_dir" ]; then
   mkdir -p "$kv_dir"
   args+=(--kv-disk-dir "$kv_dir" --kv-disk-space-mb "${ATHENA_KV_SPACE_MB:-16384}")
+fi
+
+# The speech models are the server's, beside whichever model answers: a
+# %switch keeps them.  A voice belongs to the synthesizer it was made for; the
+# release's own are in voices/.
+if [ -n "${ATHENA_TTS_MODEL:-}" ]; then
+  [ -r "$ATHENA_TTS_MODEL" ] || fail "speech synthesizer is not readable: $ATHENA_TTS_MODEL"
+  args+=(--tts-model "$ATHENA_TTS_MODEL" --tts-idle-seconds "${ATHENA_VOICE_IDLE:-300}")
+  voices=0
+  for var in ATHENA_TTS_VOICE ATHENA_TTS_VOICE_2 ATHENA_TTS_VOICE_3 ATHENA_TTS_VOICE_4; do
+    voice="${!var:-}"
+    [ -n "$voice" ] || continue
+    [ -r "$voice" ] || fail "voice is not readable: $voice"
+    args+=(--tts-voice "$voice")
+    voices=$((voices + 1))
+  done
+  if [ "$voices" = 0 ]; then
+    for voice in "$root"/voices/*.gguf; do
+      [ -r "$voice" ] || continue
+      args+=(--tts-voice "$voice")
+      voices=$((voices + 1))
+    done
+  fi
+  [ "$voices" -gt 0 ] || fail "ATHENA_TTS_MODEL needs a voice: set ATHENA_TTS_VOICE"
+  [ -z "${ATHENA_TTS_DEFAULT_VOICE:-}" ] || args+=(--tts-default-voice "$ATHENA_TTS_DEFAULT_VOICE")
+  lexicon="${ATHENA_TTS_LEXICON-$root/profiles/speech-lexicon.tsv}"
+  if [ -n "$lexicon" ]; then
+    [ -r "$lexicon" ] || fail "speech lexicon is not readable: $lexicon"
+    args+=(--tts-lexicon "$lexicon")
+  fi
+fi
+if [ -n "${ATHENA_ASR_MODEL:-}" ]; then
+  [ -r "$ATHENA_ASR_MODEL" ] || fail "speech recognizer is not readable: $ATHENA_ASR_MODEL"
+  args+=(--asr-model "$ATHENA_ASR_MODEL" --asr-idle-seconds "${ATHENA_VOICE_IDLE:-300}")
+  asr_prompt="${ATHENA_ASR_PROMPT-Athena}"
+  [ -z "$asr_prompt" ] || args+=(--asr-prompt "$asr_prompt")
 fi
 
 export XDG_STATE_HOME="${ATHENA_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}}"

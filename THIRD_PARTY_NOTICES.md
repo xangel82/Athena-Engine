@@ -158,6 +158,10 @@ The binary release archive does not include them.
 Model weights are not part of Athena's Engine and are not distributed with it.
 They are subject to the license of their respective publishers.
 
+The voice file in `voices/` holds no model weights: the speech codes of a
+synthetic reference recording and its speaker vector, made with the Qwen
+Team's Qwen3-TTS models, which are published under the Apache License 2.0.
+
 ## Credits
 
 The people and projects this engine builds on are credited in

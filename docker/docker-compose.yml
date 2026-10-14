@@ -45,6 +45,12 @@ services:
     #   ATHENA_DRAFT_3: /models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
     #   ATHENA_MMPROJ_3: /models/DeepSeek-V4-Flash-Vision-Encoder.gguf
     #   ATHENA_MODEL_4: /models/DeepSeek-V4.1-Flash-Q2.gguf
+    #
+    # Voice beside any of these blocks: add to its environment the speech
+    # models install.sh converts, and the engine speaks (/v1/audio/speech) and
+    # listens (/v1/audio/transcriptions), loading each at its first request:
+    #   ATHENA_TTS_MODEL: /models/voice/Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf
+    #   ATHENA_ASR_MODEL: /models/voice/Qwen3-ASR-1.7B-Q8_0.gguf
     volumes:
       - ${ATHENA_MODELS_DIR:?set ATHENA_MODELS_DIR}:/models:ro
       - athena-kv:/kv

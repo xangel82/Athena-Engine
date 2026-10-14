@@ -40,6 +40,11 @@ ADD ${ATHENA_PACKAGE} /opt/
 # its ATHENA_DRAFT_ and ATHENA_MMPROJ_ — makes the container switchable: a
 # conversation writes "%switch qwen", "%switch deepseek" or "%switch visio"
 # and the engine loads that one.
+# Voice beside any of them (/v1/audio/speech and /v1/audio/transcriptions),
+# with the speech models install.sh converts; the voice and the lexicon come
+# with the image:
+#   ATHENA_TTS_MODEL=/models/voice/Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf
+#   ATHENA_ASR_MODEL=/models/voice/Qwen3-ASR-1.7B-Q8_0.gguf
 ENV ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf \
     ATHENA_DRAFT=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf \
     ATHENA_KV_DIR=/kv \

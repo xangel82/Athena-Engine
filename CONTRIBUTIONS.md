@@ -46,7 +46,12 @@ attributable to Entrpi/ds4 under the MIT License.
 
 **DeepSeek** — DeepSeek V4 Flash and its reference implementation.
 
-**Qwen Team, Alibaba** — [Qwen3.8 Flash Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next).
+**Qwen Team, Alibaba** — [Qwen3.8 Flash Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next),
+and the speech models the engine converts from their published weights:
+[Qwen3-TTS-12Hz-1.7B-Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) and
+[Qwen3-ASR-1.7B](https://huggingface.co/Qwen/Qwen3-ASR-1.7B) (Apache-2.0). The voice the
+release ships, f-elegante, was designed from a text description with
+Qwen3-TTS-12Hz-1.7B-VoiceDesign: a synthetic voice, with no real speaker behind it.
 
 **Unsloth** — the [GGUF quantization of Qwen3.8 Flash Next](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF)
 the engine runs, and its MTP head.
