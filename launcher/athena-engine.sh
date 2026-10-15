@@ -60,6 +60,15 @@
 #                         Athena, empty string disables it)
 #   ATHENA_VOICE_IDLE     seconds a speech model stays loaded without a
 #                         request (default 300; 0 keeps it once loaded)
+# Retrieval, beside whichever model answers, on the same terms:
+#   ATHENA_EMBEDDING_MODEL  embedding model, the Qwen3-Embedding GGUF converted
+#                         from the authors' weights: the engine then answers
+#                         /v1/embeddings
+#   ATHENA_RERANK_MODEL   reranker, the Qwen3-Reranker GGUF converted from the
+#                         authors' weights: the engine then answers /v1/rerank
+#   ATHENA_RETRIEVAL_MAX_TOKENS  longest text either reads (default 8192)
+#   ATHENA_RETRIEVAL_IDLE seconds a retrieval model stays loaded without a
+#                         request (default 300; 0 keeps it once loaded)
 # Extra arguments are passed to the server unchanged.
 set -euo pipefail
 
@@ -273,6 +282,19 @@ if [ -n "${ATHENA_ASR_MODEL:-}" ]; then
   args+=(--asr-model "$ATHENA_ASR_MODEL" --asr-idle-seconds "${ATHENA_VOICE_IDLE:-300}")
   asr_prompt="${ATHENA_ASR_PROMPT-Athena}"
   [ -z "$asr_prompt" ] || args+=(--asr-prompt "$asr_prompt")
+fi
+# The retrieval models, the same way.
+if [ -n "${ATHENA_EMBEDDING_MODEL:-}" ]; then
+  [ -r "$ATHENA_EMBEDDING_MODEL" ] || fail "embedding model is not readable: $ATHENA_EMBEDDING_MODEL"
+  args+=(--embedding-model "$ATHENA_EMBEDDING_MODEL"
+         --embedding-idle-seconds "${ATHENA_RETRIEVAL_IDLE:-300}"
+         --embedding-max-tokens "${ATHENA_RETRIEVAL_MAX_TOKENS:-8192}")
+fi
+if [ -n "${ATHENA_RERANK_MODEL:-}" ]; then
+  [ -r "$ATHENA_RERANK_MODEL" ] || fail "reranker is not readable: $ATHENA_RERANK_MODEL"
+  args+=(--rerank-model "$ATHENA_RERANK_MODEL"
+         --rerank-idle-seconds "${ATHENA_RETRIEVAL_IDLE:-300}"
+         --rerank-max-tokens "${ATHENA_RETRIEVAL_MAX_TOKENS:-8192}")
 fi
 
 export XDG_STATE_HOME="${ATHENA_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}}"

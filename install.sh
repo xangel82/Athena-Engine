@@ -11,6 +11,7 @@
 #   ./install.sh --model qwen --from /mnt/ggufs      use files already here
 #   ./install.sh --model deepseek --verify           check what is already there
 #   ./install.sh --model qwen --voice        and the voice: speech in and out
+#   ./install.sh --model qwen --rag          and retrieval: embeddings and rerank
 #
 # Files already on the machine are never downloaded again. Without --from the
 # usual places are searched — your home, /models, /data/models and the like,
@@ -26,6 +27,7 @@ CHOICE=""
 ASSUME_YES=0
 VERIFY=0
 VOICE=""
+RAG=""
 
 die() { printf 'install: %s\n' "$*" >&2; exit 1; }
 say() { printf '%s\n' "$*"; }
@@ -51,8 +53,9 @@ while [ $# -gt 0 ]; do
     --from) FROM_DIR="${2:-}"; shift 2 ;;
     --verify) VERIFY=1; shift ;;
     --voice) VOICE=1; shift ;;
+    --rag) RAG=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
-    -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -126,7 +129,7 @@ ASR_GGUF="Qwen3-ASR-1.7B-Q8_0.gguf"
 # file is kept.
 TTS_GGUF_SHA="5463ba6b4ff81b0fbccd4d632e305f3d88a32755abe0fd8b85432d9486fc7cfa"
 TTS_PREDICTOR_SHA="08a41d0cc245c8e6bc66e70917bf1d6ce216d57832aacf72fa52380c5462a914"
-ASR_GGUF_SHA="048df1a7eae20d6a029ba58ee4613935568cb26dfbf51c4d58ecf41aa43de263"
+ASR_GGUF_SHA="b57a2debe948404be75361e67a15b5a90598170f800cad08bfc7e3efec2f6292"
 
 tts_sources() {
   cat <<EOF
@@ -156,6 +159,48 @@ tokenizer_config.json|12487
 vocab.json|2776833
 model-00002-of-00002.safetensors|478200688
 model-00001-of-00002.safetensors|4220320824
+EOF
+}
+
+# Retrieval: the Qwen Team's embedding model and reranker, the same way —
+# their published weights at the validated revisions, converted here.
+EMBED_REPO="Qwen3-Embedding-0.6B"
+EMBED_REV="97b0c614be4d77ee51c0cef4e5f07c00f9eb65b3"
+RERANK_REPO="Qwen3-Reranker-0.6B"
+RERANK_REV="e61197ed45024b0ed8a2d74b80b4d909f1255473"
+EMBED_GGUF="Qwen3-Embedding-0.6B-Q8_0.gguf"
+RERANK_GGUF="Qwen3-Reranker-0.6B-Q8_0.gguf"
+# What the converter writes from these revisions on a GB10 (empty until the
+# reference conversion is recorded).
+EMBED_GGUF_SHA="a2e52aa6b1f4563050030a6a2317e145162cafb9f4b9efab705581722977a4a5"
+RERANK_GGUF_SHA="31748103da0a0c6d64cf6e2a772a6da4649636eebae95dc86ab2cd851aaa9f01"
+
+embed_sources() {
+  cat <<EOF
+config.json|727
+config_sentence_transformers.json|215
+generation_config.json|117
+modules.json|349
+1_Pooling/config.json|313
+merges.txt|1671853
+tokenizer_config.json|9706
+vocab.json|2776833
+tokenizer.json|11423705
+model.safetensors|1191586416
+EOF
+}
+
+rerank_sources() {
+  cat <<EOF
+config.json|727
+config_sentence_transformers.json|325
+generation_config.json|214
+chat_template.jinja|741
+merges.txt|1671853
+tokenizer_config.json|9706
+vocab.json|2776833
+tokenizer.json|11422654
+model.safetensors|1191588280
 EOF
 }
 
@@ -256,8 +301,8 @@ human_size() {
 # one under the models directory, where what is missing is downloaded.  The
 # folder is left in VOICE_SOURCE.
 VOICE_SOURCE=""
-voice_repository() {  # repository, revision, list
-  local repo="$1" rev="$2" list="$3" places place candidate path bytes ok dir failed=0
+voice_repository() {  # repository, revision, list[, folder under the models directory]
+  local repo="$1" rev="$2" list="$3" area="${4:-voice}" places place candidate path bytes ok dir failed=0
   VOICE_SOURCE=""
   if [ -n "$FROM_DIR" ]; then places="$FROM_DIR"; else places="$(default_places)"; fi
   while IFS= read -r place; do
@@ -285,7 +330,7 @@ voice_repository() {  # repository, revision, list
     fi
     return $failed
   fi
-  dir="$MODELS_DIR/voice/$repo"
+  dir="$MODELS_DIR/$area/$repo"
   while IFS='|' read -r path bytes; do
     [ -n "$path" ] || continue
     if [ -f "$dir/$path" ] && [ "$(wc -c < "$dir/$path" | tr -d ' ')" = "$bytes" ]; then
@@ -366,6 +411,49 @@ install_voice() {
     if voice_repository "$ASR_REPO" "$ASR_REV" "$(asr_sources)" &&
        convert_voice "$tool" --asr "$VOICE_SOURCE" "$ASR_REV" "$dir" "$ASR_GGUF" "$ASR_GGUF_SHA"; then
       ROLE_asr="$dir/$ASR_GGUF"
+    else
+      failed=1
+    fi
+  fi
+  return $failed
+}
+
+install_rag() {
+  local dir="$MODELS_DIR/retrieval" tool free found failed=0
+  say ""
+  say "Retrieval: Qwen3-Embedding-0.6B writes vectors, Qwen3-Reranker-0.6B scores passages"
+  mkdir -p "$dir" || return 1
+  found="$dir/$EMBED_GGUF"; [ -f "$found" ] || found="$(locate_file "$EMBED_GGUF")"
+  if [ -n "$found" ]; then
+    say "  have  $EMBED_GGUF"
+    ROLE_embedding="$found"
+  fi
+  found="$dir/$RERANK_GGUF"; [ -f "$found" ] || found="$(locate_file "$RERANK_GGUF")"
+  if [ -n "$found" ]; then
+    say "  have  $RERANK_GGUF"
+    ROLE_rerank="$found"
+  fi
+  [ -n "$ROLE_embedding" ] && [ -n "$ROLE_rerank" ] && return 0
+  tool="$(release_tool qwen3-voice-convert)"
+  if [ -z "$tool" ]; then
+    say "  the converter (qwen3-voice-convert) is not in this release;"
+    say "  the engine will run without retrieval."
+    return 1
+  fi
+  free="$(free_gb "$dir")"
+  [ -n "$free" ] && say "  room on $dir: ${free} GB free (retrieval takes about 4 GB)"
+  if [ -z "$ROLE_embedding" ]; then
+    if voice_repository "$EMBED_REPO" "$EMBED_REV" "$(embed_sources)" retrieval &&
+       convert_voice "$tool" --embedding "$VOICE_SOURCE" "$EMBED_REV" "$dir" "$EMBED_GGUF" "$EMBED_GGUF_SHA"; then
+      ROLE_embedding="$dir/$EMBED_GGUF"
+    else
+      failed=1
+    fi
+  fi
+  if [ -z "$ROLE_rerank" ]; then
+    if voice_repository "$RERANK_REPO" "$RERANK_REV" "$(rerank_sources)" retrieval &&
+       convert_voice "$tool" --reranker "$VOICE_SOURCE" "$RERANK_REV" "$dir" "$RERANK_GGUF" "$RERANK_GGUF_SHA"; then
+      ROLE_rerank="$dir/$RERANK_GGUF"
     else
       failed=1
     fi
@@ -503,6 +591,8 @@ ROLE_shards=""
 # beside whichever model answers.
 ROLE_tts=""
 ROLE_asr=""
+ROLE_embedding=""
+ROLE_rerank=""
 
 remember() {
   if [ "$1" = shards ]; then
@@ -652,6 +742,8 @@ env_file() {
     [ -n "$ROLE_mmproj4" ] && say "export ATHENA_MMPROJ_4=$ROLE_mmproj4"
     [ -n "$ROLE_tts" ] && say "export ATHENA_TTS_MODEL=$ROLE_tts"
     [ -n "$ROLE_asr" ] && say "export ATHENA_ASR_MODEL=$ROLE_asr"
+    [ -n "$ROLE_embedding" ] && say "export ATHENA_EMBEDDING_MODEL=$ROLE_embedding"
+    [ -n "$ROLE_rerank" ] && say "export ATHENA_RERANK_MODEL=$ROLE_rerank"
   } > "$out"
   if [ -z "$ROLE_model" ]; then
     say ""
@@ -742,6 +834,17 @@ main() {
       case "$answer" in y|Y|yes|si|sì) VOICE=1 ;; esac
     fi
   fi
+  if [ -z "$RAG" ]; then
+    RAG=0
+    if [ "$ASSUME_YES" != 1 ]; then
+      say ""
+      say "Also retrieval? The engine then writes embeddings and reranks passages"
+      say "(/v1/embeddings, /v1/rerank): 2.4 GB to download and converted here."
+      printf 'Retrieval [y/N]: '
+      read -r answer
+      case "$answer" in y|Y|yes|si|sì) RAG=1 ;; esac
+    fi
+  fi
 
   # Qwen first in both and all: it is the one the engine starts with, and
   # the one a %switch comes back to.  A list is taken in its own order.
@@ -774,6 +877,9 @@ main() {
   if [ "$VOICE" = 1 ]; then
     install_voice || failed=1
   fi
+  if [ "$RAG" = 1 ]; then
+    install_rag || failed=1
+  fi
 
   env_file || failed=1
   if [ "$failed" != 0 ]; then
@@ -796,6 +902,11 @@ main() {
     say ""
     say "The voice is in place: the engine speaks at /v1/audio/speech and listens at"
     say "/v1/audio/transcriptions, loading each the first time it is asked."
+  fi
+  if [ -n "$ROLE_embedding$ROLE_rerank" ]; then
+    say ""
+    say "Retrieval is in place: the engine writes embeddings at /v1/embeddings and"
+    say "scores passages at /v1/rerank, loading each the first time it is asked."
   fi
 }
 
