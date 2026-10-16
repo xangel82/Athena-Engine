@@ -9,8 +9,15 @@ services:
     image: ghcr.io/xangel82/athena-engine:0.3.4
     container_name: athena-engine
     restart: unless-stopped
+    # A small init reaps what the processes leave behind and passes docker's
+    # stop on; the engine then has the time to stop it has under systemd.
+    init: true
+    stop_grace_period: 3m
     ports:
       - "30007:30007"
+      # The system companion (docs/sentinel.md), for this machine only: an
+      # HTTPS proxy on it publishes it under /system/.
+      - "127.0.0.1:30010:30010"
     # What the engine runs is yours to choose.  The image starts DeepSeek
     # V4 Flash; uncomment one of these blocks for Qwen3.8 Flash Next, for
     # DeepSeek V4 Flash Vision-Exp, for DeepSeek V4.1 Flash, or for several

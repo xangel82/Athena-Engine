@@ -52,6 +52,18 @@ ENV ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-cha
     ATHENA_PORT=30007
 
 VOLUME ["/kv", "/state"]
-EXPOSE 30007
+EXPOSE 30007 30010
 WORKDIR /opt/athena-engine
-ENTRYPOINT ["/opt/athena-engine/athena-engine.sh"]
+# The system companion (docs/sentinel.md) is what the image starts: it starts
+# the engine's launcher as its child, passes the engine's output on, restarts
+# it when asked, and ends with it, so the container's restart policy works
+# as before.  Arguments given to the container still reach the engine.  The
+# companion's token is made in /state the first time and never printed:
+#   docker compose exec athena-engine cat /state/sentinel.token
+# Publish 30010 on the host's 127.0.0.1 only (docker/docker-compose.yml).  To
+# run the engine alone: --entrypoint /opt/athena-engine/athena-engine.sh
+ENTRYPOINT ["/opt/athena-engine/bin/athena-sentinel", "--container", \
+            "--listen", "0.0.0.0", "--port", "30010", \
+            "--token-file", "/state/sentinel.token", "--token-if-missing", \
+            "--engine-key-env", "ATHENA_API_KEY", "--models-dir", "/models", \
+            "--", "/opt/athena-engine/athena-engine.sh"]

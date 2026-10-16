@@ -48,6 +48,29 @@ User services start with the machine only when lingering is enabled
 (`loginctl enable-linger`). If the engine already starts with the machine
 as a user service, it is.
 
+## In the container
+
+In the image, the companion is what starts: it runs the engine's launcher
+as its child, so there is no systemd to ask. It passes the engine's output
+on to `docker logs` and keeps its last 1000 lines for `/system/logs`. On
+request it stops the engine (SIGTERM, then SIGKILL after 3 minutes) and
+starts it again. When the engine ends by itself, the companion ends with
+the same status, and the container's restart policy applies as before.
+Arguments given to the container still reach the engine.
+
+The companion's token is made in `/state/sentinel.token` the first time and
+is never printed:
+
+```bash
+docker compose -f docker/docker-compose.yml exec athena-engine cat /state/sentinel.token
+```
+
+`docker/docker-compose.yml` publishes its port on the host's `127.0.0.1`
+only, for an HTTPS proxy on the host. There, `services` lists the engine as
+`athena-engine.sh (process)` and no proxy, and `logs` takes `engine` and
+`sentinel`. To run the engine without the companion, start the container
+with `--entrypoint /opt/athena-engine/athena-engine.sh`.
+
 ## Reaching it
 
 It listens on this machine only. Behind the HTTPS proxy
