@@ -473,7 +473,8 @@ Several keys, one per client, are separated by commas, and
 `ATHENA_API_KEY_FILE` names a file of them instead, one per line, that only
 its owner may read (`chmod 600`). `GET /health` stays open, for supervisors.
 Without a key, nothing is asked, as before. The key travels as plain text:
-across a network you do not trust, put a TLS proxy in front of the engine.
+across a network you do not trust, put an HTTPS proxy in front of the
+engine. [docs/https.md](docs/https.md) shows how, step by step, with Caddy.
 
 ### One model name for every model
 
