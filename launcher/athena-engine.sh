@@ -29,6 +29,14 @@
 #                         deepseek-v4.1-flash or qwen3.8-flash-next
 #                         (default: read from the model file)
 #   ATHENA_BIND           listen address          (default 0.0.0.0)
+#   ATHENA_API_KEY        a key every client must send, as
+#                         "Authorization: Bearer KEY" or "x-api-key: KEY";
+#                         several separated by commas, one per client.  At
+#                         least 16 characters (openssl rand -hex 32).  Unset
+#                         or empty (default): no key is asked.  GET /health
+#                         stays open either way
+#   ATHENA_API_KEY_FILE   the same, the keys in a file only its owner may
+#                         read (chmod 600), one per line
 #   ATHENA_PORT           listen port             (default 30007)
 #   ATHENA_CONTEXT        context length          (default 262144)
 #   ATHENA_MAX_TOKENS     max generated tokens    (default 16384)
@@ -295,6 +303,17 @@ if [ -n "${ATHENA_RERANK_MODEL:-}" ]; then
   args+=(--rerank-model "$ATHENA_RERANK_MODEL"
          --rerank-idle-seconds "${ATHENA_RETRIEVAL_IDLE:-300}"
          --rerank-max-tokens "${ATHENA_RETRIEVAL_MAX_TOKENS:-8192}")
+fi
+
+# The API key: handed to the engine in its environment, never on its
+# command line, which every user of the machine can read.
+if [ -n "${ATHENA_API_KEY:-}" ]; then
+  export ATHENA_API_KEY
+  args+=(--api-key-env ATHENA_API_KEY)
+fi
+if [ -n "${ATHENA_API_KEY_FILE:-}" ]; then
+  [ -r "$ATHENA_API_KEY_FILE" ] || fail "API key file is not readable: $ATHENA_API_KEY_FILE"
+  args+=(--api-key-file "$ATHENA_API_KEY_FILE")
 fi
 
 export XDG_STATE_HOME="${ATHENA_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}}"

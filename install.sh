@@ -726,6 +726,10 @@ install_model() {
 
 env_file() {
   local out="$MODELS_DIR/athena.env"
+  # An API key written there by hand outlives a new install: losing it would
+  # leave the engine open without a word.
+  local keep=""
+  [ -r "$out" ] && keep=$(grep -E '^export ATHENA_API_KEY(_FILE)?=' "$out" || true)
   {
     say "# Written by install.sh — source this before starting the engine."
     [ -n "$ROLE_model" ] && say "export ATHENA_MODEL=$ROLE_model"
@@ -744,7 +748,9 @@ env_file() {
     [ -n "$ROLE_asr" ] && say "export ATHENA_ASR_MODEL=$ROLE_asr"
     [ -n "$ROLE_embedding" ] && say "export ATHENA_EMBEDDING_MODEL=$ROLE_embedding"
     [ -n "$ROLE_rerank" ] && say "export ATHENA_RERANK_MODEL=$ROLE_rerank"
+    [ -n "$keep" ] && say "$keep"
   } > "$out"
+  [ -z "$keep" ] || chmod 600 "$out"
   if [ -z "$ROLE_model" ]; then
     say ""
     say "No model file is in place, so $out names none."

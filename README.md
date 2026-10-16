@@ -456,6 +456,25 @@ unlimited.
 Any client that talks to these APIs can use Athena's Engine by changing its
 base URL — chat front-ends, coding agents and benchmark tools alike.
 
+### An API key
+
+The engine answers anyone who can reach its port. To have it ask every
+client for a key, set one before starting it:
+
+```bash
+export ATHENA_API_KEY=$(openssl rand -hex 32)
+./athena-engine/athena-engine.sh
+```
+
+Clients send it the way OpenAI's and Anthropic's APIs take it,
+`Authorization: Bearer KEY` or `x-api-key: KEY`, which is what their SDKs do
+with the API key they are given; a request without it is answered `401`.
+Several keys, one per client, are separated by commas, and
+`ATHENA_API_KEY_FILE` names a file of them instead, one per line, that only
+its owner may read (`chmod 600`). `GET /health` stays open, for supervisors.
+Without a key, nothing is asked, as before. The key travels as plain text:
+across a network you do not trust, put a TLS proxy in front of the engine.
+
 ### One model name for every model
 
 Whatever model the engine runs, the API serves it as **`Athena`** by default.
