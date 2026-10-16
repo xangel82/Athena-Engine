@@ -476,6 +476,13 @@ Without a key, nothing is asked, as before. The key travels as plain text:
 across a network you do not trust, put an HTTPS proxy in front of the
 engine. [docs/https.md](docs/https.md) shows how, step by step, with Caddy.
 
+### The system companion
+
+`athena-sentinel` runs beside the engine and tells an administrator how the
+machine is doing: memory, GPUs, disks, the engine's state and its log. It
+can also restart the engine. It has a token of its own and is installed with
+`./install-sentinel.sh`; [docs/sentinel.md](docs/sentinel.md) describes it.
+
 ### One model name for every model
 
 Whatever model the engine runs, the API serves it as **`Athena`** by default.
