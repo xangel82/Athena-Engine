@@ -118,11 +118,14 @@ bytes, milliseconds since the epoch, °C, W and percentages from 0 to 100.
 ```json
 {
   "contract": 1,
-  "companion": { "name": "athena-sentinel", "version": "0.1.0" },
+  "companion": { "name": "athena-sentinel", "version": "0.1.1" },
   "at": 1760627069000,
   "host": { "name": "athena", "os": "Linux 6.17.0-1026-nvidia", "uptimeMs": 177909260, "cpus": 20, "load": [0.27, 0.25, 0.2] },
-  "memory": { "totalBytes": 130595991552, "availableBytes": 104240357376,
-              "swapTotalBytes": 17179865088, "swapUsedBytes": 839819264, "unified": true },
+  "memory": { "totalBytes": 130595991552, "availableBytes": 101755412480,
+              "swapTotalBytes": 17179865088, "swapUsedBytes": 839819264, "unified": true,
+              "engineMappedBytes": 92837748736, "freeBytes": 8917663744,
+              "engineMappedFiles": [ { "name": "Qwen3.8-Flash-Next-UD-IQ4_XS-00002-of-00003.gguf", "bytes": 48020000000 },
+                                     { "name": "mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf", "bytes": 2790000000 } ] },
   "gpus": [ { "index": 0, "name": "NVIDIA GB10", "temperatureC": 42, "utilizationPct": 0, "powerW": 10.3,
               "memoryTotalBytes": null, "memoryUsedBytes": null } ],
   "disks": [ { "mount": "/", "totalBytes": 982819848192, "freeBytes": 95622586368 } ],
@@ -134,8 +137,19 @@ bytes, milliseconds since the epoch, °C, W and percentages from 0 to 100.
 }
 ```
 
-- `memory.availableBytes` is the kernel's `MemAvailable`. On unified
-  memory, that is the number to watch.
+- `memory.availableBytes` is the kernel's `MemAvailable`. It counts as
+  available the files the engine keeps mapped: a model it reads in place
+  (`mapped` residency, Qwen's default) sits in the page cache, which the
+  kernel may reclaim; but a program that took it would send the engine
+  back to the disk at every step.
+- `memory.engineMappedBytes`: those files, as much of them as is in memory
+  (the engine process's `RssFile`; 0 when no engine runs).
+- `memory.freeBytes`: what is left for other programs, `availableBytes`
+  minus `engineMappedBytes` (never below 0). On unified memory, that is
+  the number to watch.
+- `memory.engineMappedFiles`: which files, by name, the largest first
+  (those with at least 64 MiB in memory). It is read again when the engine
+  or its mapped memory changes, at most once a minute.
 - `memory.unified`: `true` when the GPUs have no memory of their own,
   `false` when they do, `null` without a GPU.
 - `gpus`: empty on a machine without an NVIDIA GPU.
