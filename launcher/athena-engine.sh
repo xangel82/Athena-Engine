@@ -69,9 +69,11 @@
 #   ATHENA_VOICE_IDLE     seconds a speech model stays loaded without a
 #                         request (default 300; 0 keeps it once loaded)
 # Retrieval, beside whichever model answers, on the same terms:
-#   ATHENA_EMBEDDING_MODEL  embedding model, the Qwen3-Embedding GGUF converted
-#                         from the authors' weights: the engine then answers
-#                         /v1/embeddings
+#   ATHENA_EMBEDDING_MODEL  embedding models, GGUFs converted from the
+#                         authors' weights (EmbeddingGemma 2, Qwen3-Embedding),
+#                         apart by ':': the engine then answers /v1/embeddings,
+#                         the first model every request, each further one the
+#                         requests that name it ("model": "qwen3-embedding")
 #   ATHENA_RERANK_MODEL   reranker, the Qwen3-Reranker GGUF converted from the
 #                         authors' weights: the engine then answers /v1/rerank
 #   ATHENA_RETRIEVAL_MAX_TOKENS  longest text either reads (default 8192)
@@ -293,9 +295,13 @@ if [ -n "${ATHENA_ASR_MODEL:-}" ]; then
 fi
 # The retrieval models, the same way.
 if [ -n "${ATHENA_EMBEDDING_MODEL:-}" ]; then
-  [ -r "$ATHENA_EMBEDDING_MODEL" ] || fail "embedding model is not readable: $ATHENA_EMBEDDING_MODEL"
-  args+=(--embedding-model "$ATHENA_EMBEDDING_MODEL"
-         --embedding-idle-seconds "${ATHENA_RETRIEVAL_IDLE:-300}"
+  IFS=: read -r -a embedding_models <<< "$ATHENA_EMBEDDING_MODEL"
+  for embedding_model in "${embedding_models[@]}"; do
+    [ -n "$embedding_model" ] || continue
+    [ -r "$embedding_model" ] || fail "embedding model is not readable: $embedding_model"
+    args+=(--embedding-model "$embedding_model")
+  done
+  args+=(--embedding-idle-seconds "${ATHENA_RETRIEVAL_IDLE:-300}"
          --embedding-max-tokens "${ATHENA_RETRIEVAL_MAX_TOKENS:-8192}")
 fi
 if [ -n "${ATHENA_RERANK_MODEL:-}" ]; then
