@@ -56,6 +56,16 @@ Qwen3-TTS-12Hz-1.7B-VoiceDesign: a synthetic voice, with no real speaker behind 
 **Unsloth** — the [GGUF quantization of Qwen3.8 Flash Next](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF)
 the engine runs, and its MTP head.
 
+**Lightricks** — [LTX 2.5](https://huggingface.co/Lightricks/LTX-2.5), the audio-video
+model behind `/v1/videos`: its diffusion transformer, video and audio VAEs, latent
+upsampler and text encoder (built on Google's Gemma 4 12B), which the engine converts
+from the published weights and runs with its own implementation. LTX 2.5 is published
+under the [LTX-2.x Community License Agreement](https://huggingface.co/Lightricks/LTX-2.5):
+royalty-free for any purpose, within the use restrictions of its Attachment A, except
+that entities with annual revenues of at least USD 10 million need a paid license from
+Lightricks for any use other than non-commercial testing, evaluation and research.
+Meeting those terms is up to whoever downloads and runs the weights.
+
 Model weights are published by their authors under their own licenses and are
 not distributed with the engine.
 

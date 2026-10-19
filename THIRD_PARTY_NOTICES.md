@@ -156,7 +156,9 @@ The binary release archive does not include them.
 ## Model weights
 
 Model weights are not part of Athena's Engine and are not distributed with it.
-They are subject to the license of their respective publishers.
+They are subject to the license of their respective publishers -- among them LTX 2.5
+by Lightricks, which the engine can run for video, under the LTX-2.x Community
+License Agreement (see `CONTRIBUTIONS.md`).
 
 The voice file in `voices/` holds no model weights: the speech codes of a
 synthetic reference recording and its speaker vector, made with the Qwen

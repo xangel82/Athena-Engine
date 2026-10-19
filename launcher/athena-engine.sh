@@ -79,6 +79,17 @@
 #   ATHENA_RETRIEVAL_MAX_TOKENS  longest text either reads (default 8192)
 #   ATHENA_RETRIEVAL_IDLE seconds a retrieval model stays loaded without a
 #                         request (default 300; 0 keeps it once loaded)
+# Video, beside whichever model answers, with the memory it can give:
+#   ATHENA_VIDEO_MODEL_DIR  LTX 2.5's GGUFs converted from the authors'
+#                         weights (ltx25-text-bf16.gguf, ltx25-transformer-
+#                         bf16.gguf, ltx25-video-vae-bf16.gguf, and for two
+#                         stages and sound ltx25-latent-upsampler-bf16.gguf
+#                         and ltx25-audio-vae-bf16.gguf): the engine then
+#                         answers /v1/videos.  LTX 2.5 is under its own
+#                         licence (LTX-2.x Community License): its terms are
+#                         the user's to meet
+#   ATHENA_VIDEO_OUTPUT_DIR  where the clips are kept (default: the state
+#                         directory's athena-engine/videos)
 # Extra arguments are passed to the server unchanged.
 set -euo pipefail
 
@@ -309,6 +320,15 @@ if [ -n "${ATHENA_RERANK_MODEL:-}" ]; then
   args+=(--rerank-model "$ATHENA_RERANK_MODEL"
          --rerank-idle-seconds "${ATHENA_RETRIEVAL_IDLE:-300}"
          --rerank-max-tokens "${ATHENA_RETRIEVAL_MAX_TOKENS:-8192}")
+fi
+
+# The video model, the same way.
+if [ -n "${ATHENA_VIDEO_MODEL_DIR:-}" ]; then
+  for part in ltx25-text-bf16.gguf ltx25-transformer-bf16.gguf ltx25-video-vae-bf16.gguf; do
+    [ -r "$ATHENA_VIDEO_MODEL_DIR/$part" ] || fail "video model is not readable: $ATHENA_VIDEO_MODEL_DIR/$part"
+  done
+  args+=(--video-model-dir "$ATHENA_VIDEO_MODEL_DIR")
+  [ -z "${ATHENA_VIDEO_OUTPUT_DIR:-}" ] || args+=(--video-output-dir "$ATHENA_VIDEO_OUTPUT_DIR")
 fi
 
 # The API key: handed to the engine in its environment, never on its
