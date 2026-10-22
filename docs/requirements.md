@@ -1,6 +1,6 @@
 # Requirements
 
-Validated configuration for release 0.3.4.
+Validated configuration for release 0.7.0.
 
 ## Hardware
 
@@ -20,6 +20,11 @@ Validated configuration for release 0.3.4.
 | cuBLAS | 13.1.1.3 |
 | Docker (container release) | 29.2.1 |
 | NVIDIA Container Toolkit | 1.19.1 |
+| FFmpeg (video, compressed audio) | 6.1.1, the Ubuntu 24.04 package |
+
+FFmpeg is needed only for video (`/v1/videos`) and to embed a video or a
+compressed recording: the engine runs `ffmpeg` and `ffprobe` as programs.
+Without them everything else works, and those requests say what is missing.
 
 Copied out of the image and run without a container, the engine uses the CUDA
 libraries installed on the host. A different cuBLAS version can change speed
@@ -97,3 +102,23 @@ is 16,384 tokens. The installer fetches it only when it is named
 
 The engine reads the model family from the file, so the launcher needs no
 flag to tell the four apart.
+
+## Beside the language model
+
+The engine serves these beside whichever language model answers, each
+loaded when it is first asked for. The installer fetches the authors'
+weights at the revisions the release is validated with and converts them on
+the machine with the converters that come with the engine.
+
+| Install with | Model | From | On disk |
+|---|---|---|---|
+| `--voice` | Qwen3-TTS-12Hz-1.7B-Base, speech | [Qwen/Qwen3-TTS-12Hz-1.7B-Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 2.4 GB |
+| `--voice` | Qwen3-ASR-1.7B, transcription | [Qwen/Qwen3-ASR-1.7B](https://huggingface.co/Qwen/Qwen3-ASR-1.7B) | 2.2 GB |
+| `--rag` | EmbeddingGemma 2, multimodal embeddings (the default) | [google/embeddinggemma-2](https://huggingface.co/google/embeddinggemma-2) | 1.5 GB |
+| `--rag` | Qwen3-Embedding-0.6B, text embeddings (by name) | [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) | 0.6 GB |
+| `--rag` | Qwen3-Reranker-0.6B | [Qwen/Qwen3-Reranker-0.6B](https://huggingface.co/Qwen/Qwen3-Reranker-0.6B) | 0.6 GB |
+| `--video` | LTX 2.5, video with sound | [Lightricks/LTX-2.5](https://huggingface.co/Lightricks/LTX-2.5) (accept its license first) | 71 GB |
+
+Video takes memory the conversations hold: up to 720p it fits beside any
+model; Full HD needs the chat model's weights lent while it rests, which
+Qwen3.8 Flash Next can do and DeepSeek V4 Flash cannot yet.

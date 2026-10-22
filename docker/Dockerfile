@@ -1,16 +1,24 @@
 # Athena's Engine container image for NVIDIA GB10 (linux/arm64).
 #
-# Build context: the directory holding the release tarball.
+# Build context: the directory holding the release tarball and the FFmpeg
+# archive.
 #   docker build -f docker/Dockerfile \
 #     --build-arg ATHENA_PACKAGE=athena-engine-<version>-linux-arm64-gb10.tar.gz \
+#     --build-arg ATHENA_FFMPEG=athena-ffmpeg-lgpl-7.1.1-linux-arm64.tar.gz \
 #     -t ghcr.io/xangel82/athena-engine:<version> <dist-dir>
 #
 # The CUDA runtime is pinned to the version the release is validated on.
+#
+# FFmpeg (video, compressed audio) is built once, LGPL 2.1 or later only, with
+# the GPU's NVENC for H.264, and its archive carries the license, how it was
+# built and its exact source (/opt/ffmpeg/README).  It is not part of the
+# engine and not under the engine's license; the engine runs it as a program.
 
 ARG CUDA_IMAGE=nvidia/cuda:13.0.3-runtime-ubuntu24.04
 FROM ${CUDA_IMAGE}
 
 ARG ATHENA_PACKAGE
+ARG ATHENA_FFMPEG
 ARG ATHENA_CUBLAS_VERSION=13.1.1.3
 
 LABEL org.opencontainers.image.title="Athena's Engine" \
@@ -26,6 +34,16 @@ RUN version="$(dpkg-query -W -f='${Version}' 'libcublas-13-*' 2>/dev/null | head
     esac
 
 ADD ${ATHENA_PACKAGE} /opt/
+ADD ${ATHENA_FFMPEG} /opt/
+RUN mv /opt/athena-ffmpeg-lgpl-* /opt/ffmpeg && \
+    ln -s /opt/ffmpeg/bin/ffmpeg /opt/ffmpeg/bin/ffprobe /usr/local/bin/ && \
+    if ffmpeg -hide_banner -buildconf | grep -Eq -- "--enable-(gpl|nonfree)"; then \
+      echo "the FFmpeg archive is not the LGPL build" >&2; exit 1; \
+    fi
+
+# NVENC, the GPU's video encoder, is reached through the driver's "video"
+# capability.
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 
 # Defaults for DeepSeek V4 Flash.  For Qwen3.8 Flash Next, override them at
 # run time (docker run -e, or compose environment:):

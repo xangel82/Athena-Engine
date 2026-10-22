@@ -153,12 +153,44 @@ distributed under the NVIDIA CUDA Toolkit End User License Agreement
 (https://docs.nvidia.com/cuda/eula/) and the license terms of the base image.
 The binary release archive does not include them.
 
+## FFmpeg
+
+To read video and compressed audio (an embedding of a clip or a recording)
+and to write the clips it makes, the engine runs the `ffmpeg` and `ffprobe`
+programs installed on the machine, as separate processes. FFmpeg is not
+linked into the engine and is not part of the binary release archive; it is
+licensed by its authors under the GNU LGPL 2.1 or later, or the GNU GPL
+depending on how it was built (https://ffmpeg.org/legal.html).
+
+The container image carries FFmpeg 7.1.1 in `/opt/ffmpeg`, built for it
+without `--enable-gpl` and without `--enable-nonfree`, so under the GNU LGPL
+2.1 or later only, with NVIDIA's nv-codec-headers (MIT) for the GPU's video
+encoder. It is unmodified; `/opt/ffmpeg` holds its license, the exact
+configuration it was built with and its complete source
+(`/opt/ffmpeg/source`). It is not covered by the license of Athena's Engine.
+The engine writes H.264 with libx264 where the installed FFmpeg has it and
+with NVENC otherwise.
+
 ## Model weights
 
-Model weights are not part of Athena's Engine and are not distributed with it.
-They are subject to the license of their respective publishers -- among them LTX 2.5
-by Lightricks, which the engine can run for video, under the LTX-2.x Community
-License Agreement (see `CONTRIBUTIONS.md`).
+Model weights are not part of Athena's Engine and are not distributed with it:
+the installer fetches them from their authors, and they are subject to the
+license of their respective publishers.
+
+| Model | Publisher | License |
+|---|---|---|
+| DeepSeek V4 Flash (and its DSpark draft layers) | DeepSeek | MIT |
+| Qwen3.8 Flash Next | Qwen Team, Alibaba | Apache License 2.0 |
+| Qwen3-TTS-12Hz-1.7B-Base, Qwen3-ASR-1.7B | Qwen Team, Alibaba | Apache License 2.0 |
+| Qwen3-Embedding-0.6B, Qwen3-Reranker-0.6B | Qwen Team, Alibaba | Apache License 2.0 |
+| EmbeddingGemma 2 | Google | Apache License 2.0, with the Gemma Prohibited Use Policy |
+| LTX 2.5 | Lightricks | LTX-2.x Community License Agreement |
+
+LTX 2.5 is free under its license for individuals and for organisations below
+the revenue it sets (10 million USD a year at the time of writing); above it,
+Lightricks asks for a commercial license. Its weights are published behind an
+agreement on Hugging Face that you accept with your own account before the
+installer can fetch them. See `CONTRIBUTIONS.md`.
 
 The voice file in `voices/` holds no model weights: the speech codes of a
 synthetic reference recording and its speaker vector, made with the Qwen

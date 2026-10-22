@@ -12,6 +12,7 @@
 #   ./install.sh --model deepseek --verify           check what is already there
 #   ./install.sh --model qwen --voice        and the voice: speech in and out
 #   ./install.sh --model qwen --rag          and retrieval: embeddings and rerank
+#   ./install.sh --model qwen --video        and video: LTX 2.5 (accept its license first)
 #
 # Files already on the machine are never downloaded again. Without --from the
 # usual places are searched — your home, /models, /data/models and the like,
@@ -28,6 +29,7 @@ ASSUME_YES=0
 VERIFY=0
 VOICE=""
 RAG=""
+VIDEO=""
 
 die() { printf 'install: %s\n' "$*" >&2; exit 1; }
 say() { printf '%s\n' "$*"; }
@@ -54,8 +56,9 @@ while [ $# -gt 0 ]; do
     --verify) VERIFY=1; shift ;;
     --voice) VOICE=1; shift ;;
     --rag) RAG=1; shift ;;
+    --video) VIDEO=1; shift ;;
     --yes|-y) ASSUME_YES=1; shift ;;
-    -h|--help) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -204,6 +207,53 @@ model.safetensors|1191588280
 EOF
 }
 
+# The default embedding model: Google's EmbeddingGemma 2, multimodal (text,
+# pictures, video and sound in one vector space), the same way — converted
+# here into the one file the engine serves.  Qwen3-Embedding stays beside it,
+# by name.
+GEMMA_HF="$HF/google"
+GEMMA_REPO="embeddinggemma-2"
+GEMMA_REV="914f7f89142e33e77833254d9c9b90c3cef7303b"
+GEMMA_GGUF="embeddinggemma-2-mm-BF16.gguf"
+GEMMA_GGUF_SHA="8a958b3c23c5277948299d210d350004fd3013ac1bc98c40c2995f0b9466d7f1"
+
+gemma_sources() {
+  cat <<EOF
+config.json|4455
+config_sentence_transformers.json|1565
+modules.json|413
+sentence_bert_config.json|747
+1_Pooling/config.json|90
+2_Normalize/config.json|97
+chat_template.jinja|1016
+preprocessor_config.json|511
+processor_config.json|1788
+tokenizer_config.json|1599
+tokenizer.model|4689013
+tokenizer.json|32170510
+model.safetensors|1488915288
+EOF
+}
+
+# Video: Lightricks' LTX 2.5, from the authors' repository, which asks you to
+# accept its license with your own Hugging Face account before it lets the
+# files be fetched.  Each component is converted here into the GGUF the engine
+# reads.  Each line: <path in the repository>|<bytes>|<converter part>|<GGUF>|
+# <its sha256 as the converter writes it from this revision on a GB10>.
+LTX_HF="$HF/Lightricks"
+LTX_REPO="LTX-2.5"
+LTX_REV="49b093a39c19169a8a81721dcc541e07e945232f"
+
+ltx_sources() {
+  cat <<EOF
+vae/ltx-2.5-audio-vae-bf16.safetensors|364866540|--audio-vae|ltx25-audio-vae-bf16.gguf|15d33fc64091a21df4695d7e038a3315a7485811ffce0aa4322d16ea73e8f5a7
+latent_upscale_models/ltx-2.5-latent-spatial-upscaler-x2-bf16-1.0.safetensors|995778752|--upsampler|ltx25-latent-upsampler-bf16.gguf|008b018ee348684d673c1f0bafdcd76f6c9bc299c1651753922a9b01eacf8789
+vae/ltx-2.5-video-vae-bf16.safetensors|1472223346|--vae|ltx25-video-vae-bf16.gguf|a66aae3c5dcdc35c32eeb296697ca279f5a22b45accab4344d4b3e84fc36a3f8
+text_encoders/gemma4-12b-with-proj-ltx-2.5-bf16.safetensors|26263858182|--text|ltx25-text-bf16.gguf|5ed35ec84039e0accfd6f9a7bba633c3c0c520a9a48e98b68363971dac54bb45
+diffusion_models/ltx-2.5-22b-distilled-transformer-bf16.safetensors|42018190584|--transformer|ltx25-transformer-bf16.gguf|3c3f383bea71bb4a0964e0bb09106c239cfb501d4b52627124ed8319c33b22a1
+EOF
+}
+
 # The DSpark sidecar is not published as a GGUF: it lives beside the model it
 # drafts for, and when it is not there yet it is built out of the three
 # official weight shards that hold the draft layers, exactly as the reference
@@ -297,12 +347,13 @@ human_size() {
 }
 
 # A repository's files in one folder, as the converter reads them: a folder of
-# that name already on the machine with every file at its size, or else the
-# one under the models directory, where what is missing is downloaded.  The
-# folder is left in VOICE_SOURCE.
+# that name already on the machine with every file at its size (or the folder
+# --from names, holding them), or else the one under the models directory,
+# where what is missing is downloaded.  The folder is left in VOICE_SOURCE.
 VOICE_SOURCE=""
-voice_repository() {  # repository, revision, list[, folder under the models directory]
-  local repo="$1" rev="$2" list="$3" area="${4:-voice}" places place candidate path bytes ok dir failed=0
+voice_repository() {  # repository, revision, list[, folder under the models directory[, publisher's address]]
+  local repo="$1" rev="$2" list="$3" area="${4:-voice}" base="${5:-$QWEN_HF}"
+  local places place candidate path bytes ok dir failed=0
   VOICE_SOURCE=""
   if [ -n "$FROM_DIR" ]; then places="$FROM_DIR"; else places="$(default_places)"; fi
   while IFS= read -r place; do
@@ -310,7 +361,7 @@ voice_repository() {  # repository, revision, list[, folder under the models dir
     while IFS= read -r candidate; do
       [ -n "$candidate" ] || continue
       ok=1
-      while IFS='|' read -r path bytes; do
+      while IFS='|' read -r path bytes _; do
         [ -n "$path" ] || continue
         if [ ! -f "$candidate/$path" ] || [ "$(wc -c < "$candidate/$path" | tr -d ' ')" != "$bytes" ]; then
           ok=0
@@ -318,25 +369,27 @@ voice_repository() {  # repository, revision, list[, folder under the models dir
         fi
       done <<< "$list"
       if [ "$ok" = 1 ]; then VOICE_SOURCE="$candidate"; break 2; fi
-    done < <(find "$place" -maxdepth 4 -type d -name "$repo" 2>/dev/null)
+    done < <({ [ -n "$FROM_DIR" ] && printf '%s\n' "$place"; find "$place" -maxdepth 4 -type d -name "$repo"; } 2>/dev/null)
   done <<< "$places"
   if [ -n "$VOICE_SOURCE" ]; then
-    say "  found $repo in $(dirname "$VOICE_SOURCE")"
+    say "  found $repo in $VOICE_SOURCE"
     if [ "$VERIFY" = 1 ]; then
-      while IFS='|' read -r path bytes; do
+      while IFS='|' read -r path bytes _; do
         [ -n "$path" ] || continue
-        verify_file "$VOICE_SOURCE/$path" "$QWEN_HF/$repo/resolve/$rev/$path" || failed=1
+        verify_file "$VOICE_SOURCE/$path" "$base/$repo/resolve/$rev/$path" || failed=1
       done <<< "$list"
     fi
     return $failed
   fi
+  # Looking only, when the repository would refuse the downloads anyway.
+  [ "${VOICE_FIND_ONLY:-0}" = 1 ] && return 1
   dir="$MODELS_DIR/$area/$repo"
-  while IFS='|' read -r path bytes; do
+  while IFS='|' read -r path bytes _; do
     [ -n "$path" ] || continue
     if [ -f "$dir/$path" ] && [ "$(wc -c < "$dir/$path" | tr -d ' ')" = "$bytes" ]; then
       continue
     fi
-    fetch "$dir/$path" "$QWEN_HF/$repo/resolve/$rev/$path" "$(human_size "$bytes")" || failed=1
+    fetch "$dir/$path" "$base/$repo/resolve/$rev/$path" "$(human_size "$bytes")" || failed=1
   done <<< "$list"
   [ "$failed" = 0 ] && VOICE_SOURCE="$dir"
   return $failed
@@ -418,11 +471,41 @@ install_voice() {
   return $failed
 }
 
+# One file converted by a tool the release ships, written whole under a
+# temporary name and given its own only then.  The converter's arguments
+# follow; the sha256 is what the reference conversion wrote ("" for none).
+convert_with() {  # tool, folder, file, sha256, converter arguments...
+  local tool="$1" dir="$2" file="$3" want="$4" have
+  shift 4
+  rm -f "$dir/$file.partial"
+  say "  converting $file"
+  if ! "$tool" "$@" --out "$dir/$file.partial" > "$dir/$file.log" 2>&1; then
+    tail -3 "$dir/$file.log" | sed 's/^/  /'
+    rm -f "$dir/$file.partial"
+    say "  $file could not be converted"
+    return 1
+  fi
+  if [ -n "$want" ] && command -v sha256sum >/dev/null; then
+    have="$(sha256sum "$dir/$file.partial" | cut -d' ' -f1)"
+    [ "$have" = "$want" ] || say "  note: $file is not byte for byte the reference conversion"
+  fi
+  mv -f "$dir/$file.partial" "$dir/$file"
+  rm -f "$dir/$file.log"
+  say "  converted $file"
+  return 0
+}
+
 install_rag() {
   local dir="$MODELS_DIR/retrieval" tool free found failed=0
   say ""
-  say "Retrieval: Qwen3-Embedding-0.6B writes vectors, Qwen3-Reranker-0.6B scores passages"
+  say "Retrieval: EmbeddingGemma 2 writes vectors of text, pictures, video and sound;"
+  say "Qwen3-Embedding-0.6B, asked for by name, of text; Qwen3-Reranker-0.6B scores passages"
   mkdir -p "$dir" || return 1
+  found="$dir/$GEMMA_GGUF"; [ -f "$found" ] || found="$(locate_file "$GEMMA_GGUF")"
+  if [ -n "$found" ]; then
+    say "  have  $GEMMA_GGUF"
+    ROLE_gemma="$found"
+  fi
   found="$dir/$EMBED_GGUF"; [ -f "$found" ] || found="$(locate_file "$EMBED_GGUF")"
   if [ -n "$found" ]; then
     say "  have  $EMBED_GGUF"
@@ -433,15 +516,29 @@ install_rag() {
     say "  have  $RERANK_GGUF"
     ROLE_rerank="$found"
   fi
-  [ -n "$ROLE_embedding" ] && [ -n "$ROLE_rerank" ] && return 0
-  tool="$(release_tool qwen3-voice-convert)"
-  if [ -z "$tool" ]; then
-    say "  the converter (qwen3-voice-convert) is not in this release;"
-    say "  the engine will run without retrieval."
-    return 1
-  fi
+  [ -n "$ROLE_gemma" ] && [ -n "$ROLE_embedding" ] && [ -n "$ROLE_rerank" ] && return 0
   free="$(free_gb "$dir")"
-  [ -n "$free" ] && say "  room on $dir: ${free} GB free (retrieval takes about 4 GB)"
+  [ -n "$free" ] && say "  room on $dir: ${free} GB free (retrieval takes about 7 GB)"
+  if [ -z "$ROLE_gemma" ]; then
+    tool="$(release_tool embeddinggemma2-convert)"
+    if [ -z "$tool" ]; then
+      say "  the converter (embeddinggemma2-convert) is not in this release"
+      failed=1
+    elif voice_repository "$GEMMA_REPO" "$GEMMA_REV" "$(gemma_sources)" retrieval "$GEMMA_HF" &&
+         convert_with "$tool" "$dir" "$GEMMA_GGUF" "$GEMMA_GGUF_SHA" \
+                      --all "$VOICE_SOURCE" --revision "$GEMMA_REV"; then
+      ROLE_gemma="$dir/$GEMMA_GGUF"
+    else
+      failed=1
+    fi
+  fi
+  if [ -z "$ROLE_embedding" ] || [ -z "$ROLE_rerank" ]; then
+    tool="$(release_tool qwen3-voice-convert)"
+    if [ -z "$tool" ]; then
+      say "  the converter (qwen3-voice-convert) is not in this release"
+      return 1
+    fi
+  fi
   if [ -z "$ROLE_embedding" ]; then
     if voice_repository "$EMBED_REPO" "$EMBED_REV" "$(embed_sources)" retrieval &&
        convert_voice "$tool" --embedding "$VOICE_SOURCE" "$EMBED_REV" "$dir" "$EMBED_GGUF" "$EMBED_GGUF_SHA"; then
@@ -461,6 +558,75 @@ install_rag() {
   return $failed
 }
 
+# LTX 2.5: its five GGUFs side by side in one folder, the one the engine is
+# given.  Already converted, here or wherever models are searched for, they
+# are used where they lie; otherwise the authors' files are found or fetched
+# and each component is converted.
+install_video() {
+  local dir="$MODELS_DIR/video" tool free found have_dir ok path bytes part gguf sha code failed=0
+  say ""
+  say "Video: Lightricks' LTX 2.5 makes clips with their sound at /v1/videos"
+  found="$dir/ltx25-transformer-bf16.gguf"
+  [ -f "$found" ] || found="$(locate_file ltx25-transformer-bf16.gguf)"
+  if [ -n "$found" ]; then
+    have_dir="$(dirname "$found")"
+    ok=1
+    while IFS='|' read -r path bytes part gguf sha; do
+      [ -n "$gguf" ] || continue
+      [ -f "$have_dir/$gguf" ] || ok=0
+    done <<< "$(ltx_sources)"
+    if [ "$ok" = 1 ]; then
+      say "  have  LTX 2.5 in $have_dir"
+      ROLE_video="$have_dir"
+      return 0
+    fi
+  fi
+  tool="$(release_tool ltx25-convert)"
+  if [ -z "$tool" ]; then
+    say "  the converter (ltx25-convert) is not in this release;"
+    say "  the engine will run without video."
+    return 1
+  fi
+  mkdir -p "$dir" || return 1
+  free="$(free_gb "$dir")"
+  [ -n "$free" ] && say "  room on $dir: ${free} GB free (video takes 71 GB, and as much again for the authors' files while they are converted)"
+  # Whether this machine's Hugging Face account may fetch them.  When it may
+  # not, the authors' files are only looked for, and the way to fetch them is
+  # said at once.
+  code="$(hf_curl -s -o /dev/null -w '%{http_code}' -IL --max-time 30 \
+          "$LTX_HF/$LTX_REPO/resolve/$LTX_REV/vae/ltx-2.5-audio-vae-bf16.safetensors" 2>/dev/null)"
+  if [ "$code" = 401 ] || [ "$code" = 403 ]; then
+    if ! VOICE_FIND_ONLY=1 voice_repository "$LTX_REPO" "$LTX_REV" "$(ltx_sources)" video "$LTX_HF"; then
+      say "  LTX 2.5's files are fetched only by an account that has accepted its license:"
+      say "    1. open https://huggingface.co/Lightricks/LTX-2.5 and accept it;"
+      say "    2. sign in on this machine with 'hf auth login', or export HF_TOKEN;"
+      say "    3. run the same command again."
+      return 1
+    fi
+  elif ! voice_repository "$LTX_REPO" "$LTX_REV" "$(ltx_sources)" video "$LTX_HF"; then
+    return 1
+  fi
+  say "  converting: several minutes, and a minute or two more to check each file"
+  while IFS='|' read -r path bytes part gguf sha; do
+    [ -n "$gguf" ] || continue
+    if [ -f "$dir/$gguf" ]; then
+      say "  have  $gguf"
+      continue
+    fi
+    # Without --revision: the validated GGUFs were written without it, and the
+    # revision is the one the files were fetched at.
+    convert_with "$tool" "$dir" "$gguf" "$sha" "$part" "$VOICE_SOURCE/$path" || failed=1
+  done <<< "$(ltx_sources)"
+  [ "$failed" = 0 ] || return 1
+  ROLE_video="$dir"
+  case "$VOICE_SOURCE" in
+    "$MODELS_DIR"/*)
+      say "  the authors' files in $VOICE_SOURCE are no longer needed: delete them"
+      say "  to have their 71 GB back" ;;
+  esac
+  return 0
+}
+
 # ------------------------------------------------------------------ machine
 preflight() {
   [ "$(uname -m)" = aarch64 ] || say "note: this machine is $(uname -m); the engine runs on GB10 (aarch64)."
@@ -473,6 +639,26 @@ preflight() {
 }
 
 free_gb() { df -P -BG "$1" 2>/dev/null | awk 'NR==2 {gsub("G","",$4); print $4}'; }
+
+# A repository that asks for its license to be accepted (LTX 2.5) answers only
+# to the account that accepted it.  The token is HF_TOKEN or the one the
+# Hugging Face client keeps after `hf auth login`; it reaches curl in a header
+# file only you can read, never on a command line, and curl does not carry it
+# on to the storage a download is redirected to.
+HF_HEADER=""
+hf_auth() {
+  local token="${HF_TOKEN:-}" file
+  if [ -z "$token" ]; then
+    file="${HF_TOKEN_PATH:-${HF_HOME:-$HOME/.cache/huggingface}/token}"
+    [ -r "$file" ] && token="$(tr -d '\r\n' < "$file")"
+  fi
+  [ -n "$token" ] || return 0
+  HF_HEADER="$(mktemp)" || { HF_HEADER=""; return 0; }
+  chmod 600 "$HF_HEADER"
+  trap 'rm -f "$HF_HEADER"' EXIT
+  printf 'Authorization: Bearer %s\n' "$token" > "$HF_HEADER"
+}
+hf_curl() { if [ -n "$HF_HEADER" ]; then curl -H "@$HF_HEADER" "$@"; else curl "$@"; fi; }
 
 # HuggingFace publishes a digest of each file in x-linked-etag, so a damaged
 # download is caught here rather than by the engine hours later.  What the
@@ -487,7 +673,7 @@ free_gb() { df -P -BG "$1" 2>/dev/null | awk 'NR==2 {gsub("G","",$4); print $4}'
 # cannot be reached.
 published_facts() {
   [ -n "${1:-}" ] || return 0
-  curl -sIL --max-time 30 "$1" 2>/dev/null | tr -d '\r' | awk '
+  hf_curl -sIL --max-time 30 "$1" 2>/dev/null | tr -d '\r' | awk '
     tolower($1) == "x-linked-etag:"  { d = $2; gsub(/"/, "", d) }
     tolower($1) == "x-linked-size:"  { s = $2 }
     tolower($1) == "content-length:" { n = $2 }
@@ -546,7 +732,7 @@ fetch() {
   local dest="$1" url="$2" size="$3" tries=0
   mkdir -p "$(dirname "$dest")"
   say "  get   $(basename "$dest")  ($size)"
-  until curl -fL --retry 5 --retry-delay 5 --retry-connrefused \
+  until hf_curl -fL --retry 5 --retry-delay 5 --retry-connrefused \
              -C - -o "$dest.part" "$url"; do
     tries=$((tries + 1))
     if [ $tries -ge 3 ]; then
@@ -593,6 +779,10 @@ ROLE_tts=""
 ROLE_asr=""
 ROLE_embedding=""
 ROLE_rerank=""
+# EmbeddingGemma 2, the default embedding model, served before Qwen's; and
+# the folder of LTX 2.5's GGUFs.
+ROLE_gemma=""
+ROLE_video=""
 
 remember() {
   if [ "$1" = shards ]; then
@@ -725,7 +915,7 @@ install_model() {
 }
 
 env_file() {
-  local out="$MODELS_DIR/athena.env"
+  local out="$MODELS_DIR/athena.env" embedding
   # An API key written there by hand outlives a new install: losing it would
   # leave the engine open without a word.
   local keep=""
@@ -746,8 +936,11 @@ env_file() {
     [ -n "$ROLE_mmproj4" ] && say "export ATHENA_MMPROJ_4=$ROLE_mmproj4"
     [ -n "$ROLE_tts" ] && say "export ATHENA_TTS_MODEL=$ROLE_tts"
     [ -n "$ROLE_asr" ] && say "export ATHENA_ASR_MODEL=$ROLE_asr"
-    [ -n "$ROLE_embedding" ] && say "export ATHENA_EMBEDDING_MODEL=$ROLE_embedding"
+    # The first embedding model is the default; another is asked for by name.
+    embedding="$ROLE_gemma${ROLE_gemma:+${ROLE_embedding:+:}}$ROLE_embedding"
+    [ -n "$embedding" ] && say "export ATHENA_EMBEDDING_MODEL=$embedding"
     [ -n "$ROLE_rerank" ] && say "export ATHENA_RERANK_MODEL=$ROLE_rerank"
+    [ -n "$ROLE_video" ] && say "export ATHENA_VIDEO_MODEL_DIR=$ROLE_video"
     [ -n "$keep" ] && say "$keep"
   } > "$out"
   [ -z "$keep" ] || chmod 600 "$out"
@@ -796,6 +989,7 @@ install_one() {
 main() {
   local failed=0 answer
   preflight
+  hf_auth
   if [ -z "$CHOICE" ]; then
     say ""
     say "Which model would you like to install?"
@@ -844,11 +1038,27 @@ main() {
     RAG=0
     if [ "$ASSUME_YES" != 1 ]; then
       say ""
-      say "Also retrieval? The engine then writes embeddings and reranks passages"
-      say "(/v1/embeddings, /v1/rerank): 2.4 GB to download and converted here."
+      say "Also retrieval? The engine then writes embeddings of text, pictures, video"
+      say "and sound and reranks passages (/v1/embeddings, /v1/rerank): Google's"
+      say "EmbeddingGemma 2 and the Qwen Team's models, 3.9 GB to download and"
+      say "converted here."
       printf 'Retrieval [y/N]: '
       read -r answer
       case "$answer" in y|Y|yes|si|sì) RAG=1 ;; esac
+    fi
+  fi
+  if [ -z "$VIDEO" ]; then
+    VIDEO=0
+    if [ "$ASSUME_YES" != 1 ]; then
+      say ""
+      say "Also video? The engine then makes clips with their sound (/v1/videos):"
+      say "Lightricks' LTX 2.5, 71 GB to download and converted here. Its license is"
+      say "accepted with your own Hugging Face account first; it is free for people"
+      say "and for organisations under the revenue it sets, and asks the others for"
+      say "a commercial license (https://huggingface.co/Lightricks/LTX-2.5)."
+      printf 'Video [y/N]: '
+      read -r answer
+      case "$answer" in y|Y|yes|si|sì) VIDEO=1 ;; esac
     fi
   fi
 
@@ -886,6 +1096,9 @@ main() {
   if [ "$RAG" = 1 ]; then
     install_rag || failed=1
   fi
+  if [ "$VIDEO" = 1 ]; then
+    install_video || failed=1
+  fi
 
   env_file || failed=1
   if [ "$failed" != 0 ]; then
@@ -909,10 +1122,15 @@ main() {
     say "The voice is in place: the engine speaks at /v1/audio/speech and listens at"
     say "/v1/audio/transcriptions, loading each the first time it is asked."
   fi
-  if [ -n "$ROLE_embedding$ROLE_rerank" ]; then
+  if [ -n "$ROLE_gemma$ROLE_embedding$ROLE_rerank" ]; then
     say ""
     say "Retrieval is in place: the engine writes embeddings at /v1/embeddings and"
     say "scores passages at /v1/rerank, loading each the first time it is asked."
+  fi
+  if [ -n "$ROLE_video" ]; then
+    say ""
+    say "Video is in place: the engine makes clips at /v1/videos. It runs ffmpeg to"
+    say "write them; install it if this machine has none (sudo apt install ffmpeg)."
   fi
 }
 

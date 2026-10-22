@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.4.0 - not yet published
+## 0.7.0 - not yet published
+
+The engine now does more than chat. Beside whichever language model it
+serves, it speaks, listens, searches and makes video, and it shares one
+machine between all of them without running out of memory.
+<!-- TODO(0.7.0): speed against 0.3.4, Qwen and DeepSeek, measured with the server to itself -->
 
 ### Athena speaks and listens
 
@@ -9,28 +14,111 @@
   writes down what is said. The models are the Qwen Team's
   Qwen3-TTS-12Hz-1.7B-Base and Qwen3-ASR-1.7B, converted on your machine
   from the weights their authors publish (`install.sh --voice`, with the
-  release's own `qwen3-voice-convert`), and run by the engine on the GB10
-  like the text models. Each is loaded the first time it is asked for, in
-  the memory the engine accounts for, and goes away after five minutes
-  without a request; when the memory is not there the route answers 503 and
-  no conversation loses any. A `%switch` keeps them.
+  release's own `qwen3-voice-convert`).
 - Speech comes as WAV or raw PCM, whole or as it is made: chunked PCM, or
   `stream_format: "sse"` events. The first audio of a stream leaves the
-  engine in 0.06 s (0.08 to 0.10 s at a client on the same machine), and a
-  12-second sentence is ready whole in 2.7 s, 4.6 times faster than it
-  plays. A stream is the same audio as the whole answer, and the same seed
-  gives the same bytes.
+  engine in 0.06 s, and a 12-second sentence is ready whole in 2.7 s. A
+  stream is the same audio as the whole answer, and the same seed gives the
+  same bytes.
 - The release ships a voice, f-elegante: Italian, synthetic, designed from a
   text description, with no real speaker behind it. Another voice made for
   the same model can be named with `ATHENA_TTS_VOICE`.
-- A lexicon says how words are said (`profiles/speech-lexicon.tsv`, one line
-  a word): the Italian voice says "Athena" as Italian says it. A
-  transcription that brings no `prompt` is given "Athena" as its context
-  (`ATHENA_ASR_PROMPT`), so the name comes back spelled right.
-- Transcriptions answer as json, text or verbose_json: 12 seconds of speech
-  in 0.6 s.
-- The text models are unchanged: DeepSeek's hashes and Qwen's texts are
-  0.3.4's. <!-- TODO(0.4.0): speed against 0.3.4 -->
+- A lexicon says how words are said (`profiles/speech-lexicon.tsv`): the
+  Italian voice says "Athena" as Italian says it. A transcription that
+  brings no `prompt` is given "Athena" as its context (`ATHENA_ASR_PROMPT`),
+  so the name comes back spelled right. Twelve seconds of speech are
+  transcribed in 0.6 s.
+- A client that stops reading a long stream no longer holds the voice for
+  everyone else: a send that makes no progress for five seconds ends it.
+
+### Search: embeddings and rerank
+
+- `POST /v1/embeddings` (OpenAI's shape, with Jina's and vLLM's ways of
+  sending parts) and `POST /v1/rerank` (Jina's and Cohere's shape, also at
+  `/v2/rerank`).
+- The default embedding model is Google's **EmbeddingGemma 2**, multimodal:
+  text, pictures, video and sound go into the same vector space, so a search
+  in words finds a photograph, a clip or a recording. Video is read as
+  frames and its sound; compressed audio is decoded by an `ffmpeg` the
+  engine runs as a separate program (it is not linked into the engine).
+- **Qwen3-Embedding-0.6B** stays available by name
+  (`"model": "qwen3-embedding"`, 1024 dimensions), a little better on text
+  alone, and **Qwen3-Reranker-0.6B** scores passages against a question.
+- The vectors are the authors' within 3e-5 of cosine distance; 32 passages of
+  250 tokens are embedded in 0.2 s, a short query in 4.5 ms.
+- Each model is loaded the first time it is asked for and goes away after
+  five minutes without a request. When memory is short it reads its weights
+  from the file instead of copying them, rather than refusing.
+
+### Video
+
+- `POST /v1/videos`, OpenAI's video API: a clip with its sound, from a
+  description or from a picture (`input_reference`), made by Lightricks'
+  **LTX 2.5**, converted on your machine from the authors' weights. Jobs are
+  queued, followed with `GET /v1/videos/{id}` and downloaded from
+  `/v1/videos/{id}/content`.
+- Any even size from 64 pixels a side up to 1920: the clip is made on the
+  model's 64-pixel grid and cut at its centre, so 1280x720 and 1080x1920
+  come out exact. 1024x576 by default.
+- Four seconds take about 100 s at 1024x576, 140 s at 720p and 5 to 6 minutes
+  in Full HD, beside a running Qwen. Full HD needs the chat model's weights
+  lent while it rests (below); beside a model that cannot lend them the
+  engine refuses it at once and says 720p is the largest size.
+- A job that waits says why (`waiting`: chat, voice or memory), keeping
+  OpenAI's `status`.
+
+### One machine, many services: the memory guardian
+
+- Every service the engine runs (the conversations, the voice, search, video)
+  asks one guardian for memory, by priority: the voice first, then the
+  conversations, then search, then video. Nothing is taken from a
+  conversation that is working; a video gives its memory back at its next
+  step when someone more important needs it, and resumes where it was.
+- While the conversations rest, the guardian may lend what they hold to a
+  job that needs it: their idle lanes, the prefill's wider workspace, Qwen's
+  mapped weights (read again from the disk before the next turn, about a
+  minute). Each loan comes back before a conversation works again, and the
+  answers are the same, bit for bit.
+- `GET /internal/memory` shows the map: the machine, the engine's budget by
+  category, every service and what it holds, and every loan.
+
+### The system companion, contract 2
+
+- `athena-sentinel` stops and starts the engine as well as restarting it,
+  lists every model the engine was started with, of every kind, switches the
+  chat model over HTTP, and passes on the memory map
+  ([docs/sentinel.md](docs/sentinel.md)). The engine behind it answers
+  `GET /internal/models` and `POST /internal/models/switch`.
+- In a container the companion is what starts, and it starts the engine.
+
+### Conversations
+
+- Sampling follows what each model's authors recommend when a request does
+  not say: Qwen with thinking T=1.0, without T=0.7 and a presence penalty of
+  1.5; `presence_penalty` is honoured. A request without a seed gets a new
+  one, so asking again gives another answer.
+- Choosing among the k most likely tokens takes one pass over the vocabulary
+  instead of a sort: 0.16 ms a token instead of 13.7.
+- `script_guard` keeps a Chinese, Japanese or Korean letter from being glued
+  into a text in another script (`auto`, `cjk` or `off`); a model's own
+  protocol tokens are never refused, whatever they are spelled with.
+- A phrase guard (`phrase_guard`, streaming) keeps the reply free of the
+  machine's tics a client names: the colon that builds suspense, the long
+  dash.
+
+### Access
+
+- An optional API key: `ATHENA_API_KEY` or `ATHENA_API_KEY_FILE`, sent as
+  `Authorization: Bearer KEY` or `x-api-key: KEY`; off unless you set it.
+- [docs/https.md](docs/https.md) puts an HTTPS proxy in front of the engine.
+
+### Fixed
+
+- A DeepSeek answer could repeat its greeting forever when `script_guard` was
+  on: its end-of-sentence token, spelled with a full-width bar, was taken for
+  a Chinese letter.
+- Ranges of a model file the engine had read were not given back to the
+  system (`posix_madvise(DONTNEED)` does nothing on Linux).
 
 ## 0.3.4 - 2026-10-13
 

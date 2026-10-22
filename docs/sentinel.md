@@ -2,8 +2,10 @@
 
 `athena-sentinel` comes with the engine and runs beside it. It reports how
 the machine is doing: memory, GPUs, disks, and the state of the engine's
-and the proxy's units. It shows those units' logs and can restart the
-engine. Athena's "System" page, for administrators, reads it.
+and the proxy's units. It shows those units' logs, restarts, stops and
+starts the engine, lists every model the engine holds, switches its chat
+model and shows how the engine uses its memory. Athena's "System" page,
+for administrators, reads it.
 
 It does a fixed list of things and nothing else: it runs no command it is
 sent and needs no administrator rights. It is a systemd user unit, like
@@ -54,8 +56,9 @@ In the image, the companion is what starts: it runs the engine's launcher
 as its child, so there is no systemd to ask. It passes the engine's output
 on to `docker logs` and keeps its last 1000 lines for `/system/logs`. On
 request it stops the engine (SIGTERM, then SIGKILL after 3 minutes) and
-starts it again. When the engine ends by itself, the companion ends with
-the same status, and the container's restart policy applies as before.
+starts it again; a stop leaves it stopped until a start, and the companion
+goes on. When the engine ends by itself, the companion ends with the same
+status, and the container's restart policy applies as before.
 Arguments given to the container still reach the engine.
 
 The companion's token is made in `/state/sentinel.token` the first time and
@@ -107,18 +110,24 @@ Without the proxy, `--listen 0.0.0.0` makes it reachable from the network.
 The token is still required, but it then crosses the network as plain
 text, and the companion says so in its log.
 
-## The API (contract 1)
+## The API (contract 2)
 
 Every request carries `Authorization: Bearer TOKEN`. Units are always
 bytes, milliseconds since the epoch, °C, W and percentages from 0 to 100.
 `null` means not known: never 0.
 
+Contract 2 keeps every route and answer of contract 1 and adds the stop
+and the start of the engine, its models, a switch of its chat model and
+its memory map. `contract` in the status says which one a companion
+speaks. The models and the memory are the engine's: the companion asks
+them with the engine's key (`--engine-key-file`), so they need it.
+
 ### `GET /system/status`
 
 ```json
 {
-  "contract": 1,
-  "companion": { "name": "athena-sentinel", "version": "0.1.1" },
+  "contract": 2,
+  "companion": { "name": "athena-sentinel", "version": "0.2.0" },
   "at": 1760627069000,
   "host": { "name": "athena", "os": "Linux 6.17.0-1026-nvidia", "uptimeMs": 177909260, "cpus": 20, "load": [0.27, 0.25, 0.2] },
   "memory": { "totalBytes": 130595991552, "availableBytes": 101755412480,
@@ -180,18 +189,119 @@ off as current: the units become `unknown` and the GPU figures `null`.
   is built not to write keys or the text of conversations to its log;
   even so, logs are for administrators only.
 
-### `POST /system/services/engine/restart`
+### `POST /system/services/engine/restart`, `/stop`, `/start`
 
-- `202 {"ok": true, "unit": "engine", "at": …}`: the restart goes on in
-  the background. `status` shows the engine going down and coming back,
-  and the companion's log records when it answers again, or that it did
-  not.
-- Once a minute at most: otherwise `429 too_soon`, with `retryAfterMs` in
-  the error and a `Retry-After` header.
-- `409 busy` while a restart is under way, or while the engine is starting
+- `202 {"ok": true, "unit": "engine", "at": …, "action": "restart"}`: the
+  action goes on in the background. `status` shows the engine going down
+  and coming back, and the companion's log records when it is stopped or
+  answers again, or that it did not.
+- `200 {…, "already": true}`: a stop of an engine that is not running, or
+  a start of one that is.
+- Each action once a minute at most: otherwise `429 too_soon`, with
+  `retryAfterMs` in the error and a `Retry-After` header. A restart, a
+  stop and a start each have their own minute.
+- `409 busy` while an action is under way, or while the engine is starting
   or stopping.
-- Only the engine, and only a restart: there is no stop, and nothing that
-  would need more rights than the user's.
+- Only the engine, and nothing that would need more rights than the
+  user's. A stopped engine stays stopped until a start: through the
+  companion, `systemctl --user start athena-engine`, or a reboot when the
+  unit is enabled.
+
+### `GET /system/models`
+
+Every model the engine was started with, of every kind, as its launcher
+configured them: the chat models it can switch between (`ATHENA_MODEL`
+and the alternatives), the embedding and reranking models, the voice, the
+transcription and the video model. Nothing here is a fixed list: a model
+added to the launcher appears by itself.
+
+```json
+{
+  "contract": 2,
+  "engine": { "reachable": true },
+  "at": 1792530000000,
+  "loaded": { "chat": "qwen" },
+  "switching": null,
+  "last_switch": null,
+  "models": [
+    { "id": "qwen", "kind": "chat", "name": "Qwen3.8 Flash Next", "family": "qwen3.8-flash-next",
+      "file": "Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf", "bytes": 97373156480,
+      "parts": [ { "role": "draft", "file": "mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf", "bytes": 2786568256 },
+                 { "role": "image-encoder", "file": "mmproj-F16.gguf", "bytes": 904004000 } ],
+      "loaded": true, "switchable": true, "default": true, "load_s": 25,
+      "inputs": ["text", "image"], "streaming": false, "fits": null, "idle_unload_s": null },
+    { "id": "embeddinggemma-2", "kind": "embedding", "name": "EmbeddingGemma 2", "family": "embeddinggemma2",
+      "file": "embeddinggemma-2-mm-BF16.gguf", "bytes": 1498918496, "parts": [],
+      "loaded": false, "switchable": false, "default": true, "load_s": null,
+      "inputs": ["text", "image", "video", "audio"], "streaming": false, "fits": null, "idle_unload_s": 300 }
+  ]
+}
+```
+
+- `id`: the name a request sends. For a chat model, the name it has in
+  the launcher (`qwen`, `deepseek`); for the others, the name the engine
+  serves it by (`embeddinggemma-2`, `qwen3-embedding`, `qwen3-reranker`,
+  `qwen3-tts`, `qwen3-asr`, `ltx-2.5`).
+- `kind`: `chat`, `embedding`, `rerank`, `tts`, `asr`, `video`. Kinds may
+  be added; a client shows the ones it knows.
+- `bytes`: the whole model on disk, its `parts` included. `parts` are the
+  files that belong to a model and have no entry of their own: drafts
+  (MTP head, DSpark sidecar), image encoder, voices, the pieces of the
+  video pipeline.
+- `loaded`: in memory now. The models beside the chat model load at their
+  first request and unload after `idle_unload_s` of rest (or when the
+  engine needs their memory), so `false` is their usual state, not a
+  fault. The video model holds memory only while a clip is made.
+- `default`: for each kind, the one a request that names none gets; for
+  chat, the one the engine starts with.
+- `switchable`: `true` for the chat models only.
+- `load_s`: the seconds a switch to it takes, for the chat models: the
+  last load the engine measured, or an estimate from its size.
+- `fits` is `null` in this contract.
+- `loaded.chat`: the chat model serving now, `null` while one loads.
+- `switching`: `null`, or `{"from", "to", "since", "phase"}` with `phase`
+  `waiting_requests` (the answers in flight are finishing: at most 120 s)
+  or `loading` (the old model is gone, the new one loads). Requests that
+  arrive meanwhile wait for the new model; none is cut short.
+- `last_switch`: `null`, or how the last switch ended:
+  `{"to", "at", "ok", "reason"}`, `reason` `null` when it worked, else
+  `requests_running` (an answer was still running after 120 s: the old
+  model stays), `load_failed` (the new one did not load: the old one is
+  back, or, if it did not load either, nothing is loaded and the engine
+  needs a restart) or `memory_still_held`.
+- When the engine does not answer, `engine.reachable` is `false` and the
+  models are the last list it gave, none loaded (`[]` if it never
+  answered).
+- `/v1/models` keeps saying `Athena`, whichever chat model is loaded.
+
+### `POST /system/models/switch`
+
+`{"model": "deepseek"}`, an `id` of a chat model.
+
+- `202 {"ok": true, "from": "qwen", "to": "deepseek", "at": …}`: the
+  switch goes on in the engine; `GET /system/models` follows it.
+- `200 {"ok": true, "already": true, "model": "qwen"}`: it is the one
+  loaded.
+- `400 not_switchable`: the id is a model of another kind.
+- `404 unknown_model`: no model has that id.
+- `409 busy`: a switch, or an action on the engine, is under way.
+- `429 too_soon`: one switch every 30 seconds at most.
+- `503 engine_unreachable`: the engine does not answer.
+
+### `GET /system/memory`
+
+The engine's memory map as it gives it (`version` 1): the machine
+(`total`, `available`, `obtainable`, `guard`: what the engine may still
+take is `obtainable − guard`), the engine's own budget by category, every
+service that holds memory (`tenants`, with `bytes` and `parts`), and what
+the memory guardian has lent or taken back (`residency.cessions`, with
+`made`, `for` and `returning`; `residency.grants`, with `asker`). `409
+busy` while the engine switches models, `503 engine_unreachable` when it
+does not answer.
+
+Video jobs (the engine's `/v1/videos`, not the companion's) keep their
+OpenAI `status` while they wait for the user and say why in `waiting`:
+`null`, or `{"reason": "chat"|"voice"|"memory", "since": <Unix seconds>}`.
 
 ### Errors
 
@@ -206,9 +316,14 @@ off as current: the units become `unknown` and the GPU figures `null`.
 | 404 | `not_found` | no such route, or not with that method |
 | 400 | `unknown_unit` | a log unit not in the list |
 | 400 | `bad_request` | a parameter out of range, or a body longer than 1 KB |
-| 409 | `busy` | a restart is under way |
-| 429 | `too_soon` | a restart within a minute of the last |
+| 400 | `not_switchable` | a switch to a model that is not a chat model |
+| 404 | `unknown_model` | a switch to a model the engine does not have |
+| 409 | `busy` | an action or a switch is under way, or the engine is changing |
+| 429 | `too_soon` | an action within a minute of the last of its kind, a switch within 30 s |
 | 500 | `internal` | the companion failed (no detail in the message) |
+| 501 | `not_supported` | an engine older than contract 2 |
+| 502 | `engine_error` | the engine gave an answer the companion does not know |
+| 503 | `engine_unreachable` | the engine does not answer |
 
 The `message` is in English and is meant for whoever reads a log. A client
 shows the user its own text for each `code`.
