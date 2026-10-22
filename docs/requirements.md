@@ -1,6 +1,6 @@
 # Requirements
 
-Validated configuration for release 0.7.0.
+Validated configuration for release 1.0.0.
 
 ## Hardware
 

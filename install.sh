@@ -78,7 +78,7 @@ VISION_MODEL="DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.ggu
 VISION_DRAFT="DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf"
 VISION_ENCODER="DeepSeek-V4-Flash-Vision-Encoder.gguf"
 DEEPSEEK41_REPO="$HF/antirez/deepseek-v4.1-flash-gguf/resolve/main"
-DEEPSEEK41_MODEL="DeepSeek-V4.1-Flash-Q2.gguf"
+DEEPSEEK41_MODEL="DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf"
 
 qwen_files() {
   cat <<EOF

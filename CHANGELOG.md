@@ -1,11 +1,11 @@
 # Changelog
 
-## 0.7.0 - not yet published
+## 1.0.0 - not yet published
 
 The engine now does more than chat. Beside whichever language model it
 serves, it speaks, listens, searches and makes video, and it shares one
 machine between all of them without running out of memory.
-<!-- TODO(0.7.0): speed against 0.3.4, Qwen and DeepSeek, measured with the server to itself -->
+<!-- TODO(1.0.0): speed against 0.3.4, Qwen and DeepSeek, measured with the server to itself -->
 
 ### Athena speaks and listens
 
