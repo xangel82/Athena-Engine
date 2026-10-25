@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.0 - not yet published
+## 1.0.0 - 2026-10-25
 
 The engine now does more than chat. Beside whichever language model it
 serves, it speaks, listens, searches and makes video, and it shares one
