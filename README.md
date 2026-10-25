@@ -40,6 +40,12 @@ model.
 data center. One desktop machine is enough, and the engine is free for
 personal use, research, education, and developers and small companies at work.
 
+**With Athena Logos.** The engine runs the models; **[Athena Logos](https://github.com/xangel82/Athena-Logos)**
+is the assistant built on top of it. Talk to her, bring your documents and
+your ideas, work on a project together: she has a voice, a memory, a Library
+and tools, on your own machines and from your phone. Athena Logos works with
+any OpenAI-compatible server, and Athena's Engine is the one it is made for.
+
 ## What it does
 
 - **Long context that stays fast.** Prefill holds 920–1,230 tokens/s from 8k
@@ -556,6 +562,9 @@ of the chat model).
 
 Any client that talks to these APIs can use Athena's Engine by changing its
 base URL — chat front-ends, coding agents and benchmark tools alike.
+[Athena Logos](https://github.com/xangel82/Athena-Logos) is the assistant
+made for it: it uses the chat, the voice, search and video, and the system
+companion's model switch.
 
 ### An API key
 
