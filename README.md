@@ -45,6 +45,8 @@ is the assistant built on top of it. Talk to her, bring your documents and
 your ideas, work on a project together: she has a voice, a memory, a Library
 and tools, on your own machines and from your phone. Athena Logos works with
 any OpenAI-compatible server, and Athena's Engine is the one it is made for.
+Download Athena Logos 1.0.0 for Windows (x64), macOS (Apple silicon) and
+Linux (arm64) from its [latest release](https://github.com/xangel82/Athena-Logos/releases/latest).
 
 ## What it does
 
