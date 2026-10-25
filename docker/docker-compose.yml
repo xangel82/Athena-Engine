@@ -6,7 +6,7 @@
 # several, uncomment one of the environment blocks below.
 services:
   athena-engine:
-    image: ghcr.io/xangel82/athena-engine:0.3.4
+    image: ghcr.io/xangel82/athena-engine:1.0.0
     container_name: athena-engine
     restart: unless-stopped
     # A small init reaps what the processes leave behind and passes docker's
@@ -39,7 +39,7 @@ services:
     # DeepSeek V4.1 Flash instead, larger than the machine and read from the
     # SSD the models folder is on — keep that folder on a fast local drive:
     # environment:
-    #   ATHENA_MODEL: /models/DeepSeek-V4.1-Flash-Q2.gguf
+    #   ATHENA_MODEL: /models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
     #
     # All three, switchable while it runs, and V4.1 too if you have it:
     # environment:
@@ -51,13 +51,20 @@ services:
     #   ATHENA_MODEL_3: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
     #   ATHENA_DRAFT_3: /models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
     #   ATHENA_MMPROJ_3: /models/DeepSeek-V4-Flash-Vision-Encoder.gguf
-    #   ATHENA_MODEL_4: /models/DeepSeek-V4.1-Flash-Q2.gguf
+    #   ATHENA_MODEL_4: /models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
     #
     # Voice beside any of these blocks: add to its environment the speech
     # models install.sh converts, and the engine speaks (/v1/audio/speech) and
     # listens (/v1/audio/transcriptions), loading each at its first request:
     #   ATHENA_TTS_MODEL: /models/voice/Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf
     #   ATHENA_ASR_MODEL: /models/voice/Qwen3-ASR-1.7B-Q8_0.gguf
+    #
+    # Search (/v1/embeddings, /v1/rerank) and video (/v1/videos) the same
+    # way, with what install.sh --rag and --video convert; the first
+    # embedding model is the default, the other is asked for by name:
+    #   ATHENA_EMBEDDING_MODEL: /models/retrieval/embeddinggemma-2-mm-BF16.gguf:/models/retrieval/Qwen3-Embedding-0.6B-Q8_0.gguf
+    #   ATHENA_RERANK_MODEL: /models/retrieval/Qwen3-Reranker-0.6B-Q8_0.gguf
+    #   ATHENA_VIDEO_MODEL_DIR: /models/video
     #
     # An API key every client must send (Authorization: Bearer KEY, or
     # x-api-key: KEY), taken here from the shell compose runs in; several,

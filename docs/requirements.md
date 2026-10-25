@@ -86,15 +86,15 @@ From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Fl
 
 From [antirez/deepseek-v4.1-flash-gguf](https://huggingface.co/antirez/deepseek-v4.1-flash-gguf),
 quantised from
-[deepseek-ai/DeepSeek-V4.1-Flash](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash):
+[deepseek-ai/DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017):
 
 | File | Role |
 |---|---|
-| `DeepSeek-V4.1-Flash-Q2.gguf` | target model |
+| `DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf` | target model |
 
-One file of 340 GiB: 152 GiB of weights — IQ2_XXS and Q2_K experts, Q8
-attention projections, shared experts and output — and 189 GiB of FP8 Engram
-tables. It is larger than the machine, so the engine keeps in memory what
+One file of 340 GiB (sha256 `5296e85f…`): about 152 GiB of weights — IQ2_XXS
+gate/up and Q2_K down experts with imatrix, Q8 attention, shared experts and
+head — and 189 GiB of FP8 Engram tables. It is larger than the machine, so the engine keeps in memory what
 every token reads and fetches the experts and Engram rows a token needs from
 the SSD. There is no draft head and no image encoder for it, and its context
 is 16,384 tokens. The installer fetches it only when it is named

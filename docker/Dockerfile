@@ -54,15 +54,23 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 #   ATHENA_MODEL=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
 #   ATHENA_DRAFT=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 #   ATHENA_MMPROJ=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
-# Naming more models as well — ATHENA_MODEL_2 and ATHENA_MODEL_3, each with
+# For DeepSeek V4.1 Flash (the 1017 checkpoint), larger than the machine and
+# read from the SSD the models folder is on:
+#   ATHENA_MODEL=/models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
+# Naming more models as well — ATHENA_MODEL_2 to ATHENA_MODEL_4, each with
 # its ATHENA_DRAFT_ and ATHENA_MMPROJ_ — makes the container switchable: a
-# conversation writes "%switch qwen", "%switch deepseek" or "%switch visio"
-# and the engine loads that one.
+# conversation writes "%switch qwen", "%switch deepseek", "%switch visio" or
+# "%switch deepseek4.1" and the engine loads that one.
 # Voice beside any of them (/v1/audio/speech and /v1/audio/transcriptions),
 # with the speech models install.sh converts; the voice and the lexicon come
 # with the image:
 #   ATHENA_TTS_MODEL=/models/voice/Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf
 #   ATHENA_ASR_MODEL=/models/voice/Qwen3-ASR-1.7B-Q8_0.gguf
+# Search (/v1/embeddings, /v1/rerank), the first embedding model the default:
+#   ATHENA_EMBEDDING_MODEL=/models/retrieval/embeddinggemma-2-mm-BF16.gguf:/models/retrieval/Qwen3-Embedding-0.6B-Q8_0.gguf
+#   ATHENA_RERANK_MODEL=/models/retrieval/Qwen3-Reranker-0.6B-Q8_0.gguf
+# Video (/v1/videos), LTX 2.5's five GGUFs in one folder:
+#   ATHENA_VIDEO_MODEL_DIR=/models/video
 ENV ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf \
     ATHENA_DRAFT=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf \
     ATHENA_KV_DIR=/kv \

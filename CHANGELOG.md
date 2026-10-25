@@ -5,7 +5,6 @@
 The engine now does more than chat. Beside whichever language model it
 serves, it speaks, listens, searches and makes video, and it shares one
 machine between all of them without running out of memory.
-<!-- TODO(1.0.0): speed against 0.3.4, Qwen and DeepSeek, measured with the server to itself -->
 
 ### Athena speaks and listens
 
@@ -66,6 +65,20 @@ machine between all of them without running out of memory.
   engine refuses it at once and says 720p is the largest size.
 - A job that waits says why (`waiting`: chat, voice or memory), keeping
   OpenAI's `status`.
+- The clip is written in H.264 by the FFmpeg installed: with libx264 where
+  that FFmpeg has it, otherwise with the GPU's own encoder (NVENC), set to the
+  same quality (SSIM 0.9770 against libx264's 0.9761 on a Full HD clip).
+  `ATHENA_VIDEO_ENCODER` names one.
+- The container image carries an FFmpeg built for it under the LGPL, with
+  NVENC, its license and its source (`/opt/ffmpeg`).
+
+### DeepSeek V4.1 Flash: the 1017 checkpoint
+
+- `install.sh --model deepseek4.1` installs DeepSeek's 1017 checkpoint,
+  antirez's IQ2_XXS/Q2_K GGUF with imatrix (366 GB); the earlier Q2 file is
+  no longer published. Warm, on its internal NVMe drive: 14.8 tokens/s, a
+  6,361-token prompt read at 513 tokens/s (the earlier checkpoint: 12 and
+  505).
 
 ### One machine, many services: the memory guardian
 
@@ -105,6 +118,12 @@ machine between all of them without running out of memory.
 - A phrase guard (`phrase_guard`, streaming) keeps the reply free of the
   machine's tics a client names: the colon that builds suspense, the long
   dash.
+- A tool call reaches a stream only once the model has closed it: its
+  start, name and arguments arrive together, in order, and a call the
+  generation leaves unfinished never reaches the client (OpenAI and
+  Anthropic streams alike). The arguments no longer arrive piece by piece.
+- Qwen's `reasoning_effort: "auto"` is an ordinary thinking turn: the engine
+  no longer asks Qwen to name a thinking budget, which it read wrongly.
 
 ### Access
 
@@ -119,6 +138,17 @@ machine between all of them without running out of memory.
   a Chinese letter.
 - Ranges of a model file the engine had read were not given back to the
   system (`posix_madvise(DONTNEED)` does nothing on Linux).
+- A turn closed with `tool_choice: "none"` — what an agent does when its tool
+  rounds run out — was rendered without the tools, so Qwen's prompt changed
+  from its first token: the whole conversation was read again (41,000 tokens
+  in one case), and Qwen, shown calls with no tools declared, could write a
+  raw `<tool_call>` block into the answer. The prompt now keeps the tools and
+  the engine refuses the token that opens a call; the close reuses the
+  conversation's cache.
+- A conversation holding a tool call whose arguments are not a JSON object
+  is answered `400 invalid_request` with the reason and what to do, instead
+  of failing every later turn with a bare "native generation failed"; the
+  server's log says what the template could not write.
 
 ## 0.3.4 - 2026-10-13
 

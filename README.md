@@ -28,6 +28,9 @@ on a desk — fast enough for real work: reading long documents, holding long
 conversations, driving coding agents. Today it runs **DeepSeek V4 Flash**,
 its **Vision-Exp** checkpoint that reads images, **Qwen3.8 Flash Next**, and
 **DeepSeek V4.1 Flash**, a model larger than the machine, read from its SSD.
+Beside whichever of them answers, the same engine speaks and listens,
+searches text, pictures, video and sound, and makes video clips with their
+sound — on the same machine, at the same time.
 
 **Local.** Your prompts, your documents and your code stay on your machine.
 No cloud account, no per-token bill, no one else's terms between you and the
@@ -68,6 +71,19 @@ personal use, research, education, and developers and small companies at work.
   disk, on a computer with 128 GB. The engine keeps in memory what every
   token reads and fetches the rest from the SSD as it runs: the experts a
   token is routed to, and the rows of V4.1's Engram memory it looks up.
+- **It speaks and listens.** OpenAI's audio routes, beside whichever model
+  answers: speech from text, streamed as it is made (the first audio leaves
+  in 0.06 s), and transcription.
+- **It searches.** Embeddings and rerank: Google's EmbeddingGemma 2 puts
+  text, pictures, video and sound in one vector space, so a search in words
+  finds a photograph, a clip or a recording.
+- **It makes video.** Lightricks' LTX 2.5 makes clips with their sound, from
+  a description or from a picture, through OpenAI's video API — up to Full HD,
+  portrait or landscape.
+- **One machine, every service.** A memory guardian shares the 128 GB between
+  the conversations, the voice, search and video: nothing is taken from a
+  conversation that is working, and a video gives its memory back at its
+  next step when someone more important needs it.
 
 ## Supported models
 
@@ -76,7 +92,7 @@ personal use, research, education, and developers and small companies at work.
 | DeepSeek V4 Flash | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark sidecar | — |
 | DeepSeek V4 Flash Vision-Exp | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark drafter | images with `DeepSeek-V4-Flash-Vision-Encoder.gguf`; PDF, DOCX, Markdown, HTML, text |
 | Qwen3.8 Flash Next | Unsloth UD-IQ4_XS | 262,144 tokens | MTP head | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
-| DeepSeek V4.1 Flash | Q2: IQ2_XXS and Q2_K experts, Q8 projections and shared experts, FP8 Engram tables | 16,384 tokens | — | — |
+| DeepSeek V4.1 Flash (1017) | IQ2_XXS gate/up and Q2_K down experts with imatrix, Q8 attention, shared experts and head, FP8 Engram tables | 16,384 tokens | — | — |
 
 Vision-Exp is DeepSeek's experimental checkpoint that reads images. On text
 it scores a little below DeepSeek V4 Flash (see
@@ -84,16 +100,30 @@ it scores a little below DeepSeek V4 Flash (see
 installed side by side, with a conversation switching to Vision-Exp when it
 has pictures to look at.
 
-DeepSeek V4.1 Flash does not fit the machine: its file is 340 GiB, 189 of
-them the tables of its Engram memory. It runs from a fast local SSD, which
+DeepSeek V4.1 Flash is DeepSeek's 1017 checkpoint, in antirez's GGUF. It does
+not fit the machine: its file is 340 GiB, 189 of them the tables of its
+Engram memory. It runs from a fast local SSD, which
 sets its pace (see [A model larger than the machine](#a-model-larger-than-the-machine)),
 and it reads 16,384 tokens of context for now: its candidate
 layer covers that much, and the engine refuses a longer prompt rather than
 answer from rows the model never sees.
 
-Model weights are not distributed with the engine. `install.sh` fetches them,
-and where they come from and the exact files the release is validated with
-are listed in [docs/requirements.md](docs/requirements.md).
+Beside whichever of them answers, the engine serves these, each loaded the
+first time it is asked for:
+
+| Service | Model | Install with |
+|---|---|---|
+| Speech | Qwen3-TTS-12Hz-1.7B-Base, with the voice the release ships | `--voice` |
+| Transcription | Qwen3-ASR-1.7B | `--voice` |
+| Embeddings | Google's EmbeddingGemma 2 (text, pictures, video, sound), and Qwen3-Embedding-0.6B by name | `--rag` |
+| Rerank | Qwen3-Reranker-0.6B | `--rag` |
+| Video | Lightricks' LTX 2.5, clips with their sound | `--video` |
+
+Model weights are not distributed with the engine. `install.sh` fetches them
+— those beside the language model from their authors, converted on your
+machine by tools that come with the engine — and where they come from and the
+exact files the release is validated with are listed in
+[docs/requirements.md](docs/requirements.md).
 
 ## Performance
 
@@ -173,15 +203,19 @@ from models quantised to two and four bits. Qwen3.8 Flash Next passed 59
 scenarios, half-passed 9 and failed 1; DeepSeek V4 Flash passed 58,
 half-passed 9 and failed 2; Vision-Exp passed 56, half-passed 9 and failed 4.
 
-DeepSeek V4.1 Flash scores **87 — ★★★★ Good**: 56 passed, 8 half-passed,
-5 failed, read from the SSD and writing 10.8 tokens a second over the run.
-It was given 1,800 seconds a request instead of the tool's 120, which a
-4,096-token answer at that pace needs; no scenario took more than 470
-seconds in all.
+DeepSeek V4.1 Flash scored **87 — ★★★★ Good** in its earlier checkpoint:
+56 passed, 8 half-passed, 5 failed, read from the SSD and writing 10.8 tokens
+a second over the run. It was given 1,800 seconds a request instead of the
+tool's 120, which a 4,096-token answer at that pace needs; no scenario took
+more than 470 seconds in all. The 1017 checkpoint this release installs has
+not been scored yet.
 
-Every score here is taken at temperature 0, tool-eval-bench's default: the
-same run gives the same answers, so a score that moves is an engine that
-changed. It is also the strictest setting, stricter than the sampling the
+Every score here is taken at temperature 0, tool-eval-bench's default, one
+scenario at a time unless `--parallel` is named: the same run gives the same
+answers, so a score that moves is an engine that changed. A request that
+names its temperature is served at it, so the sampling each model's authors
+recommend, which the engine applies to a request that names none, does not
+enter these scores. It is also the strictest setting, stricter than the sampling the
 models' authors recommend, and the one where a reasoning model can think in
 circles: DeepSeek V4.1 Flash fails TC-05 at temperature 0, going over the
 same two names until it runs out of tokens, and passes it three times out of
@@ -209,16 +243,23 @@ session is idle, so the answer in progress pays nothing for it.
 ### A model larger than the machine
 
 DeepSeek V4.1 Flash fetches from the SSD whatever memory cannot hold, and
-keeps in memory the experts it reads most, learned from its own use. On the
-same GB10, from its internal NVMe drive, with the experts of its usual work
-in memory:
+keeps in memory the experts it reads most, learned from its own use: it
+counts every expert it reads, lets one that turns hot take the place of the
+coldest, rebalances between requests, and carries the counts into its next
+run. On the same GB10, from its internal NVMe drive, with the experts of its
+usual work in memory:
 
-| DeepSeek V4.1 Flash | |
+| DeepSeek V4.1 Flash (1017) | |
 |---|---|
-| Reading a 6,400-token prompt | 505 tokens/s, 12.6 seconds |
-| Generating an answer | 12 tokens/s; 10.8 over the 52,000 tokens of its tool-eval run |
-| A 4,900-token conversation right after a restart | answered in 9.9 seconds from its disk checkpoint, 54 to read it again |
-| `%switch deepseek4.1` from DeepSeek V4 Flash | 55 seconds |
+| Reading a 6,361-token prompt | 513 tokens/s, 12.4 seconds |
+| Generating an answer | 14.8 tokens/s |
+
+The first run after installing it is slower — about 3 tokens a second — while
+the engine learns which experts the model uses; the counts it keeps make the
+next runs start where it left off. With the earlier V4.1 checkpoint a
+4,900-token conversation came back after a restart in 9.9 seconds from its
+disk checkpoint (54 to read it again), and `%switch deepseek4.1` from DeepSeek
+V4 Flash took 55 seconds.
 
 ## Quick start
 
@@ -226,8 +267,8 @@ in memory:
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:0.3.4
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:0.3.4
+   docker pull ghcr.io/xangel82/athena-engine:1.0.0
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.0.0
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```
@@ -246,6 +287,7 @@ in memory:
    ./athena-engine/install.sh --model all     # Qwen, DeepSeek and DeepSeek Vision-Exp
    ./athena-engine/install.sh --model deepseek,visio   # any list; the first is the one that starts
    ./athena-engine/install.sh --model qwen,deepseek4.1 # DeepSeek V4.1 Flash comes only when named
+   ./athena-engine/install.sh --model qwen --voice --rag --video   # and speech, search and video
    ```
 
    It downloads about 97 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
@@ -256,6 +298,15 @@ in memory:
    the repository publishes, and **resumes**: stop it at any point, run the
    same command again, and it carries on from where it stopped rather than
    starting over.
+
+   `--voice` (9.3 GB to download), `--rag` (3.9 GB) and `--video` (71 GB) add
+   the models beside the language model, fetched from their authors and
+   converted on the machine. LTX 2.5's weights are published behind an
+   agreement: accept its license on its Hugging Face page with your own
+   account, sign in on the machine (`hf auth login`, or `HF_TOKEN`), and the
+   installer fetches them; it tells you so if you have not. Video and
+   compressed audio also need FFmpeg on the machine (`sudo apt install
+   ffmpeg`); the container image carries its own.
 
    If the files are already on the machine, point the installer at them
    instead of downloading anything:
@@ -311,7 +362,7 @@ in memory:
    encoder:
 
    ```bash
-   export ATHENA_MODEL=/models/DeepSeek-V4.1-Flash-Q2.gguf
+   export ATHENA_MODEL=/models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
    ./athena-engine/athena-engine.sh
    ```
 
@@ -359,6 +410,44 @@ Documents need no extra file: PDF, DOCX, Markdown, HTML, JSON and plain text
 are read by the engine itself and handed to the model as text. A PDF gives up
 its text layer, so a page that is only a scanned photograph yields nothing —
 there is no OCR.
+
+### Speech, search and video
+
+`install.sh --voice --rag --video` writes the variables that turn them on;
+by hand they are:
+
+```bash
+export ATHENA_TTS_MODEL=/models/voice/Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf
+export ATHENA_ASR_MODEL=/models/voice/Qwen3-ASR-1.7B-Q8_0.gguf
+export ATHENA_EMBEDDING_MODEL=/models/retrieval/embeddinggemma-2-mm-BF16.gguf:/models/retrieval/Qwen3-Embedding-0.6B-Q8_0.gguf
+export ATHENA_RERANK_MODEL=/models/retrieval/Qwen3-Reranker-0.6B-Q8_0.gguf
+export ATHENA_VIDEO_MODEL_DIR=/models/video
+```
+
+- **Speech** (`POST /v1/audio/speech`): WAV or raw PCM, whole or streamed as
+  it is made; a twelve-second sentence is ready in 2.7 s. The release ships an
+  Italian voice designed from a text description, with no real speaker behind
+  it, and a lexicon of how words are said.
+- **Transcription** (`POST /v1/audio/transcriptions`): twelve seconds of
+  speech in 0.6 s.
+- **Embeddings** (`POST /v1/embeddings`) and **rerank** (`POST /v1/rerank`):
+  the first embedding model listed is the default; another is asked for by
+  name (`"model": "qwen3-embedding"`). Pictures, video and recordings travel
+  as parts of the input, as Jina and vLLM send them.
+- **Video** (`POST /v1/videos`, OpenAI's video API): a clip with its sound
+  from a description, or from a picture (`input_reference`). Jobs are queued,
+  followed with `GET /v1/videos/{id}` and downloaded from
+  `/v1/videos/{id}/content`. Any even size from 64 pixels a side up to 1920,
+  portrait or landscape, 1024x576 by default; four seconds take about 100 s
+  at 1024x576 and 140 s at 720p beside a running Qwen. Full HD needs the chat
+  model's weights lent while it rests, which Qwen3.8 Flash Next can do and
+  DeepSeek cannot yet: beside DeepSeek the engine refuses it at once and says
+  720p is the largest size.
+
+Each of them is loaded the first time it is asked for and given back when it
+has rested a while. One guardian shares the memory between them and the
+conversations, by priority — the voice, then the conversations, then search,
+then video — and `GET /internal/memory` shows the map.
 
 ### Several models, one engine
 
@@ -410,7 +499,7 @@ export ATHENA_DRAFT_2=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
 export ATHENA_MODEL_3=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
 export ATHENA_DRAFT_3=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 export ATHENA_MMPROJ_3=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
-export ATHENA_MODEL_4=/models/DeepSeek-V4.1-Flash-Q2.gguf
+export ATHENA_MODEL_4=/models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
 ./athena-engine/athena-engine.sh
 ```
 
@@ -419,8 +508,10 @@ nothing in your clients changes when the model does.
 
 ### In a container
 
-The image carries the engine and the CUDA runtime it is validated against;
-the model files stay on the host and are mounted read-only.
+The image carries the engine, the CUDA runtime it is validated against, and
+an FFmpeg built for it under the LGPL with the GPU's video encoder (its
+license and source are in `/opt/ffmpeg`); the model files stay on the host
+and are mounted read-only.
 
 ```bash
 ATHENA_MODELS_DIR=/path/to/models docker compose -f docker/docker-compose.yml up -d
@@ -451,7 +542,17 @@ unlimited.
 | `POST /v1/messages` | Anthropic Messages |
 | `POST /v1/messages/count_tokens` | Anthropic token counting |
 | `GET /v1/models`, `GET /v1/models/{id}` | model list, in a shape both protocols read |
+| `POST /v1/audio/speech` | OpenAI speech: WAV, PCM, streamed or whole |
+| `POST /v1/audio/transcriptions` | OpenAI transcription |
+| `POST /v1/embeddings` | OpenAI embeddings, with Jina's and vLLM's media parts |
+| `POST /v1/rerank`, `POST /v2/rerank` | Jina and Cohere rerank |
+| `POST /v1/videos`, `GET /v1/videos/{id}`, `GET /v1/videos/{id}/content` | OpenAI video jobs |
 | `GET /health` | readiness probe |
+
+For the system companion and administrators, the engine also answers
+`GET /internal/memory` (the memory map), `GET /internal/models` and
+`POST /internal/models/switch` (every model it was started with, and a switch
+of the chat model).
 
 Any client that talks to these APIs can use Athena's Engine by changing its
 base URL — chat front-ends, coding agents and benchmark tools alike.
@@ -479,9 +580,12 @@ engine. [docs/https.md](docs/https.md) shows how, step by step, with Caddy.
 ### The system companion
 
 `athena-sentinel` runs beside the engine and tells an administrator how the
-machine is doing: memory, GPUs, disks, the engine's state and its log. It
-can also restart the engine. It has a token of its own and is installed with
-`./install-sentinel.sh`; [docs/sentinel.md](docs/sentinel.md) describes it.
+machine is doing: memory, GPUs, disks, the engine's state and its log, and
+the engine's memory map. It stops, starts and restarts the engine, lists
+every model the engine was started with, of every kind, and switches the
+chat model over HTTP. It has a token of its own and is installed with
+`./install-sentinel.sh`; in the container it is what starts, and it starts
+the engine. [docs/sentinel.md](docs/sentinel.md) describes it.
 
 ### One model name for every model
 
@@ -500,8 +604,10 @@ included: a request for any other model is answered with `404 model_not_found`.
 An NVIDIA GB10 with 128 GB of unified memory, DGX OS, and about 93 GB
 (DeepSeek V4 Flash), 94 GB (DeepSeek V4 Flash Vision-Exp), 97 GB (Qwen3.8
 Flash Next) or 366 GB (DeepSeek V4.1 Flash) of disk for each model's files —
-V4.1's on a fast local SSD, since the engine reads from it as it runs. The driver and CUDA library
-versions the release is validated with are in
+V4.1's on a fast local SSD, since the engine reads from it as it runs.
+Speech takes about 14 GB more, search about 7 GB and video 71 GB, and video
+and compressed audio need FFmpeg (the container image carries it). The
+driver and CUDA library versions the release is validated with are in
 [docs/requirements.md](docs/requirements.md).
 
 ## A special thanks to antirez
