@@ -3,7 +3,10 @@
 #
 # Required:
 #   ATHENA_MODEL          model GGUF; for a model split in parts, the first
-#                         part (...-00001-of-0000N.gguf)
+#                         part (...-00001-of-0000N.gguf).  Or NVIDIA's
+#                         Qwen3.8-Flash-Next-FP4-Local folder as NVIDIA
+#                         publishes it: the first start converts it, beside
+#                         the folder, into qwen-fp4/ (install.sh --convert)
 # Optional:
 #   ATHENA_DRAFT          speculative decoding head: the DSpark sidecar for
 #                         DeepSeek V4 Flash, the MTP head for Qwen3.8 Flash Next
@@ -16,7 +19,9 @@
 #                         conversation: qwen, deepseek, visio for DeepSeek
 #                         with its vision encoder, or deepseek4.1 for
 #                         DeepSeek V4.1 Flash, which is larger than the
-#                         machine and streams its experts from the SSD
+#                         machine and streams its experts from the SSD.  Of
+#                         two Qwens the first answers to qwen, the other to
+#                         qwen-fp4 (NVIDIA's FP4-Local) or qwen-iq4
 #   ATHENA_DRAFT_2        its speculative decoding head
 #   ATHENA_MMPROJ_2       its vision encoder, if it has one
 #   ATHENA_MODEL_3        a third one, with ATHENA_DRAFT_3 and ATHENA_MMPROJ_3
@@ -96,8 +101,36 @@ set -euo pipefail
 root="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 fail() { echo "athena-engine: $*" >&2; exit 2; }
 
+# NVIDIA's Qwen3.8-Flash-Next-FP4-Local as NVIDIA publishes it -- a folder of
+# safetensors -- where a GGUF is expected: converted once, beside the folder
+# (into qwen-fp4/), by the installer and the converter this release ships;
+# every start after that finds the converted files.  Fills fp4_model and
+# fp4_draft, its MTP head.
+fp4_model=""
+fp4_draft=""
+nvidia_folder() {  # folder
+  local folder dir
+  folder="$(cd "$1" && pwd)" || fail "cannot enter $1"
+  [ -f "$folder/model.safetensors.index.json" ] ||
+    fail "$1 is a folder: name the model GGUF, or NVIDIA's Qwen3.8-Flash-Next-FP4-Local folder"
+  dir="$(dirname "$folder")/qwen-fp4"
+  fp4_model="$dir/Qwen3.8-Flash-Next-FP4-Local.gguf"
+  fp4_draft="$dir/Qwen3.8-Flash-Next-FP4-Local-MTP.gguf"
+  if [ ! -f "$fp4_model" ] || [ ! -f "$fp4_draft" ]; then
+    [ -x "$root/install.sh" ] || fail "install.sh is not beside the launcher: it converts $folder"
+    echo "athena-engine: $folder is NVIDIA's checkpoint as published; converting it once into $dir" >&2
+    "$root/install.sh" --convert "$folder" >&2 || fail "the conversion of $folder did not finish"
+  fi
+  echo "athena-engine: $folder is served from $fp4_model" >&2
+}
+
 model="${ATHENA_MODEL:-}"
 [ -n "$model" ] || fail "set ATHENA_MODEL to the model GGUF (its first part if it is split)"
+if [ -d "$model" ]; then
+  nvidia_folder "$model"
+  model="$fp4_model"
+  [ -n "${ATHENA_DRAFT:-}" ] || ATHENA_DRAFT="$fp4_draft"
+fi
 [ -r "$model" ] || fail "model is not readable: $model"
 
 # The family of a model file.  general.architecture is the first key of the
@@ -219,7 +252,19 @@ register_model() {  # model, draft, mmproj
     deepseek-v4-flash) name=deepseek ;;
     deepseek-v4-flash-vision) name=visio ;;
     deepseek-v4.1-flash) name=deepseek4.1 ;;
-    qwen3.8-flash-next) name=qwen ;;
+    qwen3.8-flash-next)
+      name=qwen
+      # Two Qwens: the first answers to qwen, the other by its weights.
+      case "$registered" in
+        *" qwen "*)
+          if head -c 16777216 "$path" | LC_ALL=C grep -a -q 'nvidia/Qwen3.8-Flash-Next-FP4-Local'; then
+            name=qwen-fp4
+          else
+            name=qwen-iq4
+          fi
+          ;;
+      esac
+      ;;
     *) fail "cannot tell the model family of $path" ;;
   esac
   [ "$fam" != deepseek-v4-flash ] || [ -z "$mmproj" ] ||
@@ -254,9 +299,15 @@ if [ -n "${ATHENA_MODEL_2:-}${ATHENA_MODEL_3:-}${ATHENA_MODEL_4:-}" ]; then
   for slot in 2 3 4; do
     var="ATHENA_MODEL_$slot"; path="${!var:-}"
     [ -n "$path" ] || continue
-    [ -r "$path" ] || fail "model $slot is not readable: $path"
     draft_var="ATHENA_DRAFT_$slot"; mmproj_var="ATHENA_MMPROJ_$slot"
-    register_model "$path" "${!draft_var:-}" "${!mmproj_var:-}"
+    draft="${!draft_var:-}"
+    if [ -d "$path" ]; then
+      nvidia_folder "$path"
+      path="$fp4_model"
+      [ -n "$draft" ] || draft="$fp4_draft"
+    fi
+    [ -r "$path" ] || fail "model $slot is not readable: $path"
+    register_model "$path" "$draft" "${!mmproj_var:-}"
   done
 fi
 

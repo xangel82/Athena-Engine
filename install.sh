@@ -3,6 +3,9 @@
 # and writes the environment that starts the engine with them.
 #
 #   ./install.sh                             ask which model, download into ./models
+#   ./install.sh --model qwen                Qwen3.8 Flash Next as NVIDIA's FP4-Local,
+#                                            downloaded from NVIDIA and converted here
+#   ./install.sh --model qwen-iq4            the same model as unsloth's IQ4_XS GGUF
 #   ./install.sh --model both                Qwen and DeepSeek; %switch picks in chat
 #   ./install.sh --model all                 Qwen, DeepSeek and DeepSeek Vision-Exp
 #   ./install.sh --model deepseek,visio      any list; the first is the one that starts
@@ -13,6 +16,9 @@
 #   ./install.sh --model qwen --voice        and the voice: speech in and out
 #   ./install.sh --model qwen --rag          and retrieval: embeddings and rerank
 #   ./install.sh --model qwen --video        and video: LTX 2.5 (accept its license first)
+#   ./install.sh --convert DIR               NVIDIA's Qwen3.8-Flash-Next-FP4-Local folder,
+#                                            converted beside it (what the launcher does
+#                                            when ATHENA_MODEL names the folder)
 #
 # Files already on the machine are never downloaded again. Without --from the
 # usual places are searched — your home, /models, /data/models and the like,
@@ -30,6 +36,7 @@ VERIFY=0
 VOICE=""
 RAG=""
 VIDEO=""
+CONVERT=""
 
 die() { printf 'install: %s\n' "$*" >&2; exit 1; }
 say() { printf '%s\n' "$*"; }
@@ -57,8 +64,9 @@ while [ $# -gt 0 ]; do
     --voice) VOICE=1; shift ;;
     --rag) RAG=1; shift ;;
     --video) VIDEO=1; shift ;;
+    --convert) CONVERT="${2:-}"; shift 2 ;;
     --yes|-y) ASSUME_YES=1; shift ;;
-    -h|--help) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -80,6 +88,24 @@ VISION_ENCODER="DeepSeek-V4-Flash-Vision-Encoder.gguf"
 DEEPSEEK41_REPO="$HF/antirez/deepseek-v4.1-flash-gguf/resolve/main"
 DEEPSEEK41_MODEL="DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf"
 
+# Qwen3.8 Flash Next FP4-Local: NVIDIA's quantization-aware distillation of
+# the model (nvidia/Qwen3.8-Flash-Next-FP4-Local), published as safetensors.
+# The converter the release ships (qwen38-nvfp4-convert) writes it here into
+# the GGUF the engine reads, the authors' values in the engine's formats and
+# nothing quantized again, and its own MTP head beside it.  The tokenizer,
+# the chat template and the tensor names come from unsloth's GGUF of the same
+# model: from its files when they are on the machine, else from their first
+# bytes, all the converter reads of them.  At these revisions the converter
+# writes the files the engine was validated with, byte for byte.
+NV_HF="$HF/nvidia"
+FP4_REPO="Qwen3.8-Flash-Next-FP4-Local"
+FP4_REV="b9ce18a6887e18c089fdea8509a33e63429a3300"
+FP4_GGUF="Qwen3.8-Flash-Next-FP4-Local.gguf"
+FP4_MTP="Qwen3.8-Flash-Next-FP4-Local-MTP.gguf"
+FP4_GGUF_SHA="cc8dbc37be6d2605f292ceb6c7ccb4d3bfc377d384be3a4ac4497ebe48dc406a"
+FP4_MTP_SHA="dd34893eeebec65a34e5da65a88cd2c006bf8d2bbc88750810ac64186d850108"
+QWEN_TEMPLATE_REPO="$HF/unsloth/Qwen3.8-Flash-Next-GGUF/resolve/766911a6b7369840a91dbcd95f9f997acaab6cd6"
+
 qwen_files() {
   cat <<EOF
 UD-IQ4_XS/$QWEN_PARTS-00001-of-00003.gguf|$QWEN_REPO/UD-IQ4_XS/$QWEN_PARTS-00001-of-00003.gguf|11 MB|model
@@ -87,6 +113,48 @@ UD-IQ4_XS/$QWEN_PARTS-00002-of-00003.gguf|$QWEN_REPO/UD-IQ4_XS/$QWEN_PARTS-00002
 UD-IQ4_XS/$QWEN_PARTS-00003-of-00003.gguf|$QWEN_REPO/UD-IQ4_XS/$QWEN_PARTS-00003-of-00003.gguf|47 GB|part
 MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|$QWEN_REPO/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|2.6 GB|draft
 MMPROJ/mmproj-F16.gguf|$QWEN_REPO/mmproj-F16.gguf|0.9 GB|mmproj
+EOF
+}
+
+# What the converter reads of NVIDIA's checkpoint, at FP4_REV: <path>|<bytes>.
+fp4_sources() {
+  cat <<EOF
+README.md|29021
+config.json|75217
+model.safetensors.index.json|47280974
+tensors/model-00001-of-00021.safetensors|5000643504
+tensors/model-00002-of-00021.safetensors|5002792096
+tensors/model-00003-of-00021.safetensors|5002927400
+tensors/model-00004-of-00021.safetensors|5003194672
+tensors/model-00005-of-00021.safetensors|5003151448
+tensors/model-00006-of-00021.safetensors|5002892148
+tensors/model-00007-of-00021.safetensors|5002907708
+tensors/model-00008-of-00021.safetensors|5003103756
+tensors/model-00009-of-00021.safetensors|5002976316
+tensors/model-00010-of-00021.safetensors|5002834136
+tensors/model-00011-of-00021.safetensors|5002685828
+tensors/model-00012-of-00021.safetensors|5002912920
+tensors/model-00013-of-00021.safetensors|5003237060
+tensors/model-00014-of-00021.safetensors|4845006312
+tensors/model-00015-of-00021.safetensors|4860574920
+tensors/model-00016-of-00021.safetensors|4950031028
+tensors/model-00017-of-00021.safetensors|4950030896
+tensors/model-00018-of-00021.safetensors|4950030896
+tensors/model-00019-of-00021.safetensors|4950030904
+tensors/model-00020-of-00021.safetensors|4950030904
+tensors/model-00021-of-00021.safetensors|2700016864
+EOF
+}
+
+# The unsloth GGUFs the converter takes its names and key/values from, and
+# how many of their first bytes it needs: <path>|<bytes>|<sha256 of them>.
+# The first part holds no tensor, so its bytes are the whole file.
+fp4_templates() {
+  cat <<EOF
+UD-IQ4_XS/$QWEN_PARTS-00001-of-00003.gguf|10946624|5ce89370720f8bf90890f439361282104c1aa1482d4013bb9a50923e758e71a4
+UD-IQ4_XS/$QWEN_PARTS-00002-of-00003.gguf|1048576|338a91f7e6129f85768b30bb0ec6738b9c59d02df4b62f2d206b81e3e33118ca
+UD-IQ4_XS/$QWEN_PARTS-00003-of-00003.gguf|1048576|f3dbd3947e1715092383e07ac258ae96f04e9477be45696732750a97bdcbed6f
+MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|12000000|a935af80afce8a412d6aab34260fdd0bf344112deb4718429ea6a6a26d292715
 EOF
 }
 
@@ -485,15 +553,184 @@ convert_with() {  # tool, folder, file, sha256, converter arguments...
     say "  $file could not be converted"
     return 1
   fi
+  CONVERTED_SAME=0
   if [ -n "$want" ] && command -v sha256sum >/dev/null; then
-    have="$(sha256sum "$dir/$file.partial" | cut -d' ' -f1)"
-    [ "$have" = "$want" ] || say "  note: $file is not byte for byte the reference conversion"
+    have="$(sha256_of "$dir/$file.partial")"
+    if [ "$have" = "$want" ]; then
+      CONVERTED_SAME=1
+    else
+      say "  note: $file is not byte for byte the reference conversion"
+    fi
   fi
   mv -f "$dir/$file.partial" "$dir/$file"
   rm -f "$dir/$file.log"
   say "  converted $file"
   return 0
 }
+
+# A file's sha256, read past the page cache where the filesystem allows it:
+# hashing a 100 GB model must not push a running engine's mapped weights out
+# of memory.  Where O_DIRECT is refused, it is read as any file.
+sha256_of() {
+  if dd if="$1" of=/dev/null iflag=direct bs=1M count=1 status=none 2>/dev/null; then
+    dd if="$1" iflag=direct bs=64M status=none | sha256sum | cut -d' ' -f1
+  else
+    sha256sum "$1" | cut -d' ' -f1
+  fi
+}
+
+# The first bytes of a published file, checked against what they were when
+# the engine was validated: the converter reads a template's header only.
+fetch_head() {  # destination, url, bytes, sha256
+  local dest="$1" url="$2" bytes="$3" want="$4" have
+  mkdir -p "$(dirname "$dest")"
+  if ! hf_curl -sfL --retry 5 --retry-delay 5 --retry-connrefused -r "0-$((bytes - 1))" \
+               -o "$dest.part" "$url"; then
+    rm -f "$dest.part"
+    say "  could not fetch the header of $(basename "$url")"
+    return 1
+  fi
+  if [ "$(wc -c < "$dest.part" | tr -d ' ')" != "$bytes" ]; then
+    rm -f "$dest.part"
+    say "  the header of $(basename "$url") came back short"
+    return 1
+  fi
+  if command -v sha256sum >/dev/null; then
+    have="$(sha256sum "$dest.part" | cut -d' ' -f1)"
+    if [ "$have" != "$want" ]; then
+      rm -f "$dest.part"
+      say "  the header of $(basename "$url") is not the one the engine was validated with"
+      return 1
+    fi
+  fi
+  mv -f "$dest.part" "$dest"
+}
+
+# The templates, into FP4_TEMPLATE_ARGS (--template ... for the model) and
+# FP4_MTP_TEMPLATE: a whole unsloth file found on the machine, else its first
+# bytes kept under <folder>/.templates.
+FP4_TEMPLATE_ARGS=()
+FP4_MTP_TEMPLATE=""
+fp4_template_files() {  # folder
+  local dir="$1/.templates" path bytes sha name url found failed=0
+  FP4_TEMPLATE_ARGS=()
+  FP4_MTP_TEMPLATE=""
+  while IFS='|' read -r path bytes sha; do
+    [ -n "$path" ] || continue
+    name="$(basename "$path")"
+    url="$QWEN_TEMPLATE_REPO/$path"
+    found="$(locate_file "$name" "$url")"
+    if [ -z "$found" ]; then
+      found="$dir/$name.head"
+      if [ ! -f "$found" ] || [ "$(sha256sum "$found" | cut -d' ' -f1)" != "$sha" ]; then
+        fetch_head "$found" "$url" "$bytes" "$sha" || { failed=1; continue; }
+      fi
+    fi
+    case "$name" in
+      mtp-*) FP4_MTP_TEMPLATE="$found" ;;
+      *) FP4_TEMPLATE_ARGS+=(--template "$found") ;;
+    esac
+  done <<< "$(fp4_templates)"
+  return $failed
+}
+
+# What comes with the converted model, beside it and on the screen.
+FP4_NOTICE="Qwen3.8-Flash-Next-FP4-Local is NVIDIA's, licensed by NVIDIA Corporation under the
+NVIDIA Open Model Agreement:
+  https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-open-model-agreement/
+The Qwen3.8-Flash-Next base model is governed by the Qwen Community License 1.0:
+  https://huggingface.co/Qwen/Qwen3.8-Flash-Next/blob/main/LICENSE"
+fp4_notice() {  # folder
+  {
+    printf 'These files were converted on this machine by Athena'"'"'s Engine'"'"'s installer\n'
+    printf '(qwen38-nvfp4-convert) from NVIDIA'"'"'s checkpoint nvidia/%s,\n' "$FP4_REPO"
+    printf 'revision %s, with the tokenizer and the chat template of\n' "$FP4_REV"
+    printf 'unsloth/Qwen3.8-Flash-Next-GGUF.\n\n%s\n' "$FP4_NOTICE"
+  } > "$1/NOTICE.txt"
+}
+
+# NVIDIA's checkpoint converted into <folder>: the model and its MTP head.
+# The checkpoint is SOURCE when given (a folder already on the machine, taken
+# as it is), else found or downloaded at FP4_REV under the models directory.
+# FP4_SOURCE says where it was, FP4_SAME whether both files came out byte for
+# byte the reference conversion.
+FP4_SOURCE=""
+FP4_SAME=0
+convert_qwen_fp4() {  # folder[, source]
+  local dir="$1" src="${2:-}" tool free need same=1
+  FP4_SAME=0
+  tool="$(release_tool qwen38-nvfp4-convert)"
+  if [ -z "$tool" ]; then
+    say "  the converter (qwen38-nvfp4-convert) is not in this release"
+    return 1
+  fi
+  mkdir -p "$dir" || return 1
+  if [ -z "$src" ]; then
+    # The checkpoint already here costs no room; downloaded, it costs 102 GB.
+    need=209
+    if (VERIFY=0 VOICE_FIND_ONLY=1 voice_repository "$FP4_REPO" "$FP4_REV" "$(fp4_sources)" qwen-fp4 \
+                                             "$NV_HF" > /dev/null 2>&1); then
+      need=106
+    fi
+    free="$(free_gb "$dir")"
+    [ -n "$free" ] && say "  room on $dir: ${free} GB free (about $need GB are needed)"
+    voice_repository "$FP4_REPO" "$FP4_REV" "$(fp4_sources)" qwen-fp4 "$NV_HF" || return 1
+    src="$VOICE_SOURCE"
+  else
+    [ -f "$src/config.json" ] && [ -f "$src/model.safetensors.index.json" ] ||
+      { say "  $src is not a checkpoint: no config.json or no model.safetensors.index.json"; return 1; }
+    free="$(free_gb "$dir")"
+    [ -n "$free" ] && say "  room on $dir: ${free} GB free (about 106 GB are needed)"
+  fi
+  FP4_SOURCE="$src"
+  fp4_template_files "$dir" || return 1
+  say "  the conversion reads 102 GB and writes 106 GB: about eight minutes on a GB10"
+  convert_with "$tool" "$dir" "$FP4_GGUF" "$FP4_GGUF_SHA" --hf "$src" "${FP4_TEMPLATE_ARGS[@]}" \
+               --revision "$FP4_REV" || return 1
+  [ "$CONVERTED_SAME" = 1 ] || same=0
+  convert_with "$tool" "$dir" "$FP4_MTP" "$FP4_MTP_SHA" --mtp --hf "$src" --template "$FP4_MTP_TEMPLATE" \
+               --revision "$FP4_REV" || return 1
+  [ "$CONVERTED_SAME" = 1 ] || same=0
+  fp4_notice "$dir"
+  FP4_SAME=$same
+  return 0
+}
+
+install_qwen_fp4() {
+  local dir="$MODELS_DIR/qwen-fp4" model draft failed=0 answer
+  say ""
+  say "Qwen3.8 Flash Next FP4-Local (NVIDIA)"
+  printf '%s\n' "$FP4_NOTICE" | sed 's/^/  /'
+  mkdir -p "$dir" || return 1
+  model="$dir/$FP4_GGUF"; [ -f "$model" ] || model="$(locate_file "$FP4_GGUF")"
+  draft="$dir/$FP4_MTP"; [ -f "$draft" ] || draft="$(locate_file "$FP4_MTP")"
+  if [ -n "$model" ] && [ -n "$draft" ]; then
+    say "  have  $FP4_GGUF"
+    say "  have  $FP4_MTP"
+  else
+    convert_qwen_fp4 "$dir" || return 1
+    model="$dir/$FP4_GGUF"
+    draft="$dir/$FP4_MTP"
+    # The checkpoint is needed no more.  Only one this installer downloaded,
+    # and only once both files are the reference ones, is offered for removal.
+    case "$FP4_SOURCE" in
+      "$MODELS_DIR"/*)
+        if [ "$FP4_SAME" = 1 ] && [ "$ASSUME_YES" != 1 ]; then
+          say "  NVIDIA's checkpoint ($FP4_SOURCE, 102 GB) is no longer needed by the engine."
+          printf '  Delete it? [y/N]: '
+          read -r answer
+          case "$answer" in y|Y|yes|si|sì) rm -rf "$FP4_SOURCE" && say "  deleted" ;; esac
+        fi
+        ;;
+    esac
+  fi
+  remember model "$model"
+  remember draft "$draft"
+  # It reads images with the vision encoder of the same model.
+  resolve "$MODELS_DIR/qwen" MMPROJ/mmproj-F16.gguf "$QWEN_REPO/mmproj-F16.gguf" "0.9 GB" mmproj || failed=1
+  return $failed
+}
+
 
 install_rag() {
   local dir="$MODELS_DIR/retrieval" tool free found failed=0
@@ -960,7 +1197,10 @@ env_file() {
 install_one() {
   case "$1" in
     qwen)
-      install_model "Qwen3.8 Flash Next" "$(qwen_files)" qwen || return 1
+      install_qwen_fp4 || return 1
+      ;;
+    qwen-iq4)
+      install_model "Qwen3.8 Flash Next (unsloth IQ4_XS)" "$(qwen_files)" qwen || return 1
       ;;
     visio|vision)
       install_model "DeepSeek V4 Flash Vision-Exp" "$(vision_files)" deepseek-vision || return 1
@@ -982,7 +1222,7 @@ install_one() {
       fi
       return $failed
       ;;
-    *) die "--model must be qwen, deepseek, visio, deepseek4.1, both, all or a list of them" ;;
+    *) die "--model must be qwen, qwen-iq4, deepseek, visio, deepseek4.1, both, all or a list of them" ;;
   esac
 }
 
@@ -990,18 +1230,33 @@ main() {
   local failed=0 answer
   preflight
   hf_auth
+  # The launcher's first start with ATHENA_MODEL naming NVIDIA's folder: the
+  # GGUFs go beside it, into qwen-fp4/, and athena.env is not touched.
+  if [ -n "$CONVERT" ]; then
+    [ -d "$CONVERT" ] || die "--convert takes NVIDIA's Qwen3.8-Flash-Next-FP4-Local folder"
+    CONVERT="$(cd "$CONVERT" && pwd)"
+    MODELS_DIR="$(dirname "$CONVERT")"
+    say "Qwen3.8 Flash Next FP4-Local (NVIDIA): converting $CONVERT"
+    printf '%s\n' "$FP4_NOTICE" | sed 's/^/  /'
+    convert_qwen_fp4 "$MODELS_DIR/qwen-fp4" "$CONVERT" || exit 1
+    say "  model $MODELS_DIR/qwen-fp4/$FP4_GGUF"
+    say "  draft $MODELS_DIR/qwen-fp4/$FP4_MTP"
+    exit 0
+  fi
   if [ -z "$CHOICE" ]; then
     say ""
     say "Which model would you like to install?"
-    say "  1) Qwen3.8 Flash Next            — 97 GB, reads images, the fastest"
-    say "  2) DeepSeek V4 Flash             — 87 GB"
-    say "  3) DeepSeek V4 Flash Vision-Exp  — 94 GB, reads images"
-    say "  4) Qwen and DeepSeek             — 184 GB; one runs, and a conversation"
-    say "                                     calls the other in with %switch"
-    say "  5) all three                     — 278 GB"
-    say "  6) DeepSeek V4.1 Flash           — 366 GB, more than memory holds: the"
+    say "  1) Qwen3.8 Flash Next            — NVIDIA's FP4-Local: 102 GB to download and"
+    say "                                     converted here (106 GB), reads images, the fastest"
+    say "  2) Qwen3.8 Flash Next IQ4_XS     — unsloth's GGUF, 97 GB, nothing to convert"
+    say "  3) DeepSeek V4 Flash             — 87 GB"
+    say "  4) DeepSeek V4 Flash Vision-Exp  — 94 GB, reads images"
+    say "  5) Qwen and DeepSeek             — one runs, and a conversation calls the"
+    say "                                     other in with %switch"
+    say "  6) all three"
+    say "  7) DeepSeek V4.1 Flash           — 366 GB, more than memory holds: the"
     say "                                     engine reads it from the disk as it runs"
-    say "Several numbers, as in 1,6, install each; the first is the one that starts."
+    say "Several numbers, as in 1,7, install each; the first is the one that starts."
     if [ "$ASSUME_YES" = 1 ]; then
       CHOICE=qwen
     else
@@ -1011,12 +1266,13 @@ main() {
       for number in ${answer//,/ }; do
         case "$number" in
           1) picked="$picked,qwen" ;;
-          2) picked="$picked,deepseek" ;;
-          3) picked="$picked,visio" ;;
-          4) picked="$picked,qwen,deepseek" ;;
-          5) picked="$picked,qwen,deepseek,visio" ;;
-          6) picked="$picked,deepseek4.1" ;;
-          *) die "choose 1, 2, 3, 4, 5 or 6, or several of them" ;;
+          2) picked="$picked,qwen-iq4" ;;
+          3) picked="$picked,deepseek" ;;
+          4) picked="$picked,visio" ;;
+          5) picked="$picked,qwen,deepseek" ;;
+          6) picked="$picked,qwen,deepseek,visio" ;;
+          7) picked="$picked,deepseek4.1" ;;
+          *) die "choose 1 to 7, or several of them" ;;
         esac
       done
       CHOICE="${picked#,}"
@@ -1074,8 +1330,8 @@ main() {
   for one in $list; do
     [ "$one" = vision ] && one=visio
     case "$one" in
-      qwen|deepseek|visio|deepseek4.1) ;;
-      *) die "--model must be qwen, deepseek, visio, deepseek4.1, both, all or a list of them" ;;
+      qwen|qwen-iq4|deepseek|visio|deepseek4.1) ;;
+      *) die "--model must be qwen, qwen-iq4, deepseek, visio, deepseek4.1, both, all or a list of them" ;;
     esac
     case "$seen" in *" $one "*) die "$one is in the list twice" ;; esac
     seen="$seen$one "
@@ -1115,7 +1371,18 @@ main() {
     say ""
     say "The models are in place. The engine starts with ${SLOT_NAMES[0]} and a"
     say "conversation calls another in by writing, as a message:"
-    for one in "${SLOT_NAMES[@]:1}"; do say "  %switch $one"; done
+    local qwens=0
+    for one in "${SLOT_NAMES[@]}"; do
+      case "$one" in qwen|qwen-iq4) qwens=$((qwens + 1)) ;; esac
+    done
+    for one in "${SLOT_NAMES[@]:1}"; do
+      # The first Qwen answers to qwen, another one by its weights.
+      case "$one" in
+        qwen) [ "$qwens" -gt 1 ] && one=qwen-fp4 ;;
+        qwen-iq4) [ "$qwens" -gt 1 ] || one=qwen ;;
+      esac
+      say "  %switch $one"
+    done
   fi
   if [ -n "$ROLE_tts$ROLE_asr" ]; then
     say ""
