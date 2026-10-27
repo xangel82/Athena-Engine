@@ -1,6 +1,6 @@
 # Requirements
 
-Validated configuration for release 1.0.0.
+Validated configuration for release 1.0.2.
 
 ## Hardware
 
@@ -72,9 +72,34 @@ All three are published as files, so nothing is built on the machine. The
 encoder belongs to this checkpoint only; the launcher refuses it beside the
 model above.
 
-### Qwen3.8 Flash Next — about 97 GB
+### Qwen3.8 Flash Next FP4-Local — about 103 GB, converted to 106 GB
 
-From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF):
+NVIDIA's quantization-aware distillation of the model, from
+[nvidia/Qwen3.8-Flash-Next-FP4-Local](https://huggingface.co/nvidia/Qwen3.8-Flash-Next-FP4-Local)
+at revision `b9ce18a6887e18c089fdea8509a33e63429a3300`, published as
+safetensors (102 GB). The installer converts it on the machine with the
+release's `qwen38-nvfp4-convert`, taking the tokenizer and the chat template
+from a few megabytes of
+[unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF)
+(revision `766911a6b7369840a91dbcd95f9f997acaab6cd6`), and checks the result:
+
+| File | Role | SHA-256 |
+|---|---|---|
+| `qwen-fp4/Qwen3.8-Flash-Next-FP4-Local.gguf` | target model | `cc8dbc37be6d2605f292ceb6c7ccb4d3bfc377d384be3a4ac4497ebe48dc406a` |
+| `qwen-fp4/Qwen3.8-Flash-Next-FP4-Local-MTP.gguf` | its own MTP head (speculative decoding) | `dd34893eeebec65a34e5da65a88cd2c006bf8d2bbc88750810ac64186d850108` |
+| `qwen/MMPROJ/mmproj-F16.gguf`, from Unsloth's repository | vision encoder — without it the model answers text only | |
+
+The conversion reads 102 GB and writes 106 GB, about eight minutes on a GB10;
+the installer then offers to delete NVIDIA's checkpoint, which the engine no
+longer needs. The model is NVIDIA's, licensed by NVIDIA Corporation under the
+NVIDIA Open Model Agreement, and its base, Qwen3.8-Flash-Next, is governed by
+the Qwen Community License 1.0; the installer writes both notices beside the
+converted files.
+
+### Qwen3.8 Flash Next IQ4_XS — about 97 GB
+
+From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF),
+installed with `install.sh --model qwen-iq4`:
 
 | File | Role |
 |---|---|

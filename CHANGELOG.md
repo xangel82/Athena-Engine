@@ -1,5 +1,71 @@
 # Changelog
 
+## 1.0.2 - 2026-10-27
+
+Qwen3.8 Flash Next now runs as NVIDIA made it for four-bit hardware, faster
+in both directions, and the engine shares the machine more safely: what it
+serves beside the conversations no longer stops them, and a request short of
+memory waits for it instead of being refused.
+
+### Qwen3.8 Flash Next in NVIDIA's FP4
+
+- The default Qwen is NVIDIA's **Qwen3.8-Flash-Next-FP4-Local**: the model
+  distilled by NVIDIA to four-bit floating-point experts (NVFP4) and eight-bit
+  dense layers (MXFP8), with its own MTP head as the draft. It has kernels of
+  its own: the experts on the GB10's block-scale tensor cores, grouped for a
+  prompt and row by row for an answer.
+- NVIDIA publishes it as safetensors. `install.sh --model qwen` downloads the
+  checkpoint (102 GB) and converts it on the machine with the converter that
+  comes with the engine (`qwen38-nvfp4-convert`): about eight minutes on a
+  GB10, 106 GB written, byte for byte the file the release is validated with,
+  and then it offers to delete the checkpoint. `install.sh --convert DIR`
+  converts a checkpoint already on the machine, and the launcher converts it
+  by itself when `ATHENA_MODEL` names NVIDIA's folder. Beside the converted
+  files the installer writes NVIDIA's and Qwen's licence notices.
+- Against the IQ4_XS GGUF, on the same binary: a prompt of 8,192 tokens is
+  read at 1,795 tokens/s instead of 1,279 and answered at 43.4 tokens/s
+  instead of 37.7; 32,768 tokens at 1,769 and 41.1 instead of 1,275 and 36.5.
+  A 196k prompt is read at 1,646 tokens/s and a 256k one at 1,588.
+  tool-eval-bench 2.7 (`--parallel 4`, seed 42) gives it 88, where the IQ4_XS
+  GGUF scored 86 to 88 with the same settings.
+- Unsloth's UD-IQ4_XS GGUF stays available: `install.sh --model qwen-iq4`.
+  With both installed, the first answers to `%switch qwen` and the other by
+  its weights, `%switch qwen-fp4` or `%switch qwen-iq4`.
+
+### Sharing the machine
+
+- A search model loading and another asking for memory at the same moment
+  could stop the engine: each waited for the other, and every conversation
+  after them stopped too. Fixed; the memory guardian never waits for a
+  search model's lock.
+- A search or speech model coming up while a conversation was capturing its
+  next step could slip its own work into that step: the new model's state was
+  never cleared and the conversation's later steps wrote into it, and once
+  the model was unloaded the conversation failed (`trunk verification
+  failed`) and its lane stayed unusable until a restart. Fixed: a model comes
+  up only between the steps of the others. 1.0.0 had it too, rarely.
+- The model's weights are locked in memory. Mapping them for the GPU does
+  not keep them on a GB10, and under memory pressure the system could take
+  pages back while the GPU was reading them. The engine needs `memlock`
+  unlimited for it (the systemd unit and `docker/docker-compose.yml` set it);
+  without it the engine says so once and serves as before.
+- A conversation whose state grows in the middle of an answer and finds the
+  machine full asks the memory guardian before failing: first what the less
+  important services hold and are not using (search unloaded, a video pausing
+  at its next step), then the conversations at rest.
+- Speech, transcription, embeddings and rerank wait for memory when the
+  guardian finds nothing to give at once, up to 90 seconds from the request's
+  arrival — the same for every service — and only then answer `503`, with
+  `Retry-After: 30`. In a stress run beside two growing conversations and
+  video, failed searches went from about 115 to 2 every ten minutes.
+- A turn refused for memory no longer leaves its lane refusing the next
+  conversation (`reset prompt proof does not match staged input`).
+- A client that closes a stream in the middle of a speculative block keeps
+  its lane: the next request continues the conversation instead of reading it
+  again from the start.
+- A regenerated answer no longer leaves the conversation's disk checkpoint
+  behind: the save it replaced is still written.
+
 ## 1.0.0 - 2026-10-25
 
 The engine now does more than chat. Beside whichever language model it
