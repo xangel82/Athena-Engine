@@ -6,7 +6,7 @@
 # several, uncomment one of the environment blocks below.
 services:
   athena-engine:
-    image: ghcr.io/xangel82/athena-engine:1.0.2
+    image: ghcr.io/xangel82/athena-engine:1.0.3
     container_name: athena-engine
     restart: unless-stopped
     # A small init reaps what the processes leave behind and passes docker's
@@ -24,19 +24,11 @@ services:
     # — then a conversation switches between them by writing "%switch qwen",
     # "%switch deepseek", "%switch visio" or "%switch deepseek4.1".
     #
-    # Qwen3.8 Flash Next instead, NVIDIA's FP4-Local as install.sh converts
-    # it (the models are mounted read-only, so convert them on the host
-    # first: install.sh --model qwen, or install.sh --convert DIR):
+    # Qwen3.8 Flash Next instead:
     # environment:
-    #   ATHENA_MODEL: /models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local.gguf
-    #   ATHENA_DRAFT: /models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local-MTP.gguf
-    #   ATHENA_MMPROJ: /models/qwen/MMPROJ/mmproj-F16.gguf
-    #
-    # or Unsloth's IQ4_XS GGUF of it (install.sh --model qwen-iq4):
-    # environment:
-    #   ATHENA_MODEL: /models/qwen/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
-    #   ATHENA_DRAFT: /models/qwen/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
-    #   ATHENA_MMPROJ: /models/qwen/MMPROJ/mmproj-F16.gguf
+    #   ATHENA_MODEL: /models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+    #   ATHENA_DRAFT: /models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
+    #   ATHENA_MMPROJ: /models/MMPROJ/mmproj-F16.gguf
     #
     # DeepSeek V4 Flash Vision-Exp instead, the DeepSeek that reads images:
     # environment:
@@ -51,9 +43,9 @@ services:
     #
     # All three, switchable while it runs, and V4.1 too if you have it:
     # environment:
-    #   ATHENA_MODEL: /models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local.gguf
-    #   ATHENA_DRAFT: /models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local-MTP.gguf
-    #   ATHENA_MMPROJ: /models/qwen/MMPROJ/mmproj-F16.gguf
+    #   ATHENA_MODEL: /models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+    #   ATHENA_DRAFT: /models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
+    #   ATHENA_MMPROJ: /models/MMPROJ/mmproj-F16.gguf
     #   ATHENA_MODEL_2: /models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
     #   ATHENA_DRAFT_2: /models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
     #   ATHENA_MODEL_3: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf

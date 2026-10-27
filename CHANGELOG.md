@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.0.3 - 2026-10-27
+
+Several conversations served at once now share each step of the model, and
+Qwen3.8 Flash Next is Unsloth's UD-IQ4_XS GGUF again.
+
+### Several conversations at once
+
+- Conversations with and without images now verify and draft their tokens in
+  one pass of the model instead of taking turns. Three at once on a GB10 — a
+  long answer, a chat about an image and an agent writing JSON through a tool
+  — went from 34.0 to 55.4 tokens/s together, every answer the same bytes as
+  when each runs alone.
+- A shared step the engine cannot take keeps the drafts it already made, so
+  the conversations that go on one by one do not compute them twice, and the
+  log says why the step was taken apart (`TRUNK_LANE_APART`).
+
+### Qwen3.8 Flash Next
+
+- Unsloth's UD-IQ4_XS GGUF is again the Qwen that `install.sh --model qwen`
+  fetches and the launcher runs, with its MTP head. The FP4-Local checkpoint
+  and its conversion are no longer part of the installer, the launcher or
+  the package. A machine that installed 1.0.2 finds the files it already has
+  with `install.sh --model qwen --from ./models`.
+- The thinking block ends at the model's own closing token: the same
+  characters written as text inside a thought stay in the thought.
+- A tool result that carries images is written inside the result, as the
+  model's chat template writes it; such a request used to fail.
+- For every turn that thinks, the log says how likely the model was to close
+  its thought at the very first token (`THOUGHT_FIRST`), and
+  `ATHENA_THOUGHT_NOT_EMPTY=1` has the engine draw that first token again
+  without the closing one. It is off by default.
+
 ## 1.0.2 - 2026-10-27
 
 Qwen3.8 Flash Next now runs as NVIDIA made it for four-bit hardware, faster

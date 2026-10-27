@@ -99,7 +99,7 @@ Linux (arm64) from its [latest release](https://github.com/xangel82/Athena-Logos
 |---|---|---|---|---|
 | DeepSeek V4 Flash | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark sidecar | — |
 | DeepSeek V4 Flash Vision-Exp | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark drafter | images with `DeepSeek-V4-Flash-Vision-Encoder.gguf`; PDF, DOCX, Markdown, HTML, text |
-| Qwen3.8 Flash Next | NVIDIA's FP4-Local: NVFP4 experts, MXFP8 dense layers, converted on your machine; or Unsloth UD-IQ4_XS | 262,144 tokens | MTP head (FP4-Local's own) | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
+| Qwen3.8 Flash Next | Unsloth UD-IQ4_XS | 262,144 tokens | MTP head | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
 | DeepSeek V4.1 Flash (1017) | IQ2_XXS gate/up and Q2_K down experts with imatrix, Q8 attention, shared experts and head, FP8 Engram tables | 16,384 tokens | — | — |
 
 Vision-Exp is DeepSeek's experimental checkpoint that reads images. On text
@@ -107,20 +107,6 @@ it scores a little below DeepSeek V4 Flash (see
 [Doing what it is told](#doing-what-it-is-told)), so the two are best
 installed side by side, with a conversation switching to Vision-Exp when it
 has pictures to look at.
-
-Qwen3.8 Flash Next is NVIDIA's **Qwen3.8-Flash-Next-FP4-Local**: the model
-distilled by NVIDIA to four-bit floating-point experts and eight-bit dense
-layers, with its own MTP head. NVIDIA publishes it as safetensors; the
-installer downloads it and converts it on your machine, with the converter
-that comes with the engine, into the file the release is validated with,
-byte for byte. On the GB10 it reads a prompt about 40 per cent faster than
-Unsloth's IQ4_XS GGUF and writes about 15 per cent faster — 1,795 against
-1,279 tokens/s and 43.4 against 37.7 tokens/s at 8,192 tokens, on the same
-binary — and calls tools as well: 88 on tool-eval-bench 2.7 with
-`--parallel 4`, where the IQ4_XS GGUF scored 86 to 88 with the same
-settings. The IQ4_XS GGUF stays available (`install.sh --model qwen-iq4`);
-the Qwen figures under [Performance](#performance) are its, measured for
-1.0.0.
 
 DeepSeek V4.1 Flash is DeepSeek's 1017 checkpoint, in antirez's GGUF. It does
 not fit the machine: its file is 340 GiB, 189 of them the tables of its
@@ -289,8 +275,8 @@ V4 Flash took 55 seconds.
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:1.0.2
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.0.2
+   docker pull ghcr.io/xangel82/athena-engine:1.0.3
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.0.3
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```
@@ -305,7 +291,6 @@ V4 Flash took 55 seconds.
    ```bash
    ./athena-engine/install.sh                 # asks which model, downloads into ./models
    ./athena-engine/install.sh --model qwen --dir /data/models
-   ./athena-engine/install.sh --model qwen-iq4   # Qwen as Unsloth's IQ4_XS GGUF instead of NVIDIA's FP4
    ./athena-engine/install.sh --model both    # Qwen and DeepSeek, so a chat can switch between them
    ./athena-engine/install.sh --model all     # Qwen, DeepSeek and DeepSeek Vision-Exp
    ./athena-engine/install.sh --model deepseek,visio   # any list; the first is the one that starts
@@ -313,13 +298,11 @@ V4 Flash took 55 seconds.
    ./athena-engine/install.sh --model qwen --voice --rag --video   # and speech, search and video
    ```
 
-   It downloads about 103 GB for Qwen3.8 Flash Next — NVIDIA's checkpoint and
-   the image encoder; the checkpoint is converted on the machine into 106 GB
-   in about eight minutes, and the installer then offers to delete it — or
-   97 GB for its IQ4_XS GGUF, which needs no conversion. DeepSeek V4 Flash is
-   87 GB and DeepSeek V4 Flash Vision-Exp 94 GB. DeepSeek V4.1 Flash is 366 GB
-   more, and only when you name it: `all` means the other three, and the menu
-   offers it as a choice of its own. The installer checks each file against the checksum
+   It downloads about 97 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
+   Flash, 94 GB for DeepSeek V4 Flash Vision-Exp, 184 GB for Qwen and
+   DeepSeek or 278 GB for all three. DeepSeek V4.1 Flash is 366 GB more, and
+   only when you name it: `all` means the other three, and the menu offers it
+   as a choice of its own. The installer checks each file against the checksum
    the repository publishes, and **resumes**: stop it at any point, run the
    same command again, and it carries on from where it stopped rather than
    starting over.
@@ -342,10 +325,7 @@ V4 Flash took 55 seconds.
 
    It looks for each file by name anywhere under that directory, uses it
    where it lies, and fetches only what is missing. Add `--verify` to check
-   what is already there against the published checksums. NVIDIA's Qwen
-   checkpoint found there is converted where it lies; `install.sh --convert
-   DIR` converts one folder alone, and the launcher does the same by itself
-   when `ATHENA_MODEL` names NVIDIA's folder instead of a GGUF.
+   what is already there against the published checksums.
 
    DeepSeek V4 Flash's DSpark draft head is not published as a file: the
    installer builds it on the machine, out of the three official weight
@@ -377,16 +357,7 @@ V4 Flash took 55 seconds.
    ./athena-engine/athena-engine.sh
    ```
 
-   For Qwen3.8 Flash Next, the converted FP4-Local and its own MTP head:
-
-   ```bash
-   export ATHENA_MODEL=/models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local.gguf
-   export ATHENA_DRAFT=/models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local-MTP.gguf
-   export ATHENA_MMPROJ=/models/qwen/MMPROJ/mmproj-F16.gguf
-   ./athena-engine/athena-engine.sh
-   ```
-
-   Or Unsloth's IQ4_XS GGUF, pointing at the first part of the model:
+   For Qwen3.8 Flash Next, point at the first part of the model:
 
    ```bash
    export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
@@ -510,8 +481,7 @@ Ready in 45.1 s.
 Those lines arrive as each one becomes true, in the reasoning channel of a
 streaming reply, so the minute a switch takes is a minute you can watch
 rather than a minute of silence. `%switch qwen`, `%switch deepseek` and
-`%switch deepseek4.1` call the others in — with both Qwens installed, the
-first is `qwen` and the other `qwen-fp4` or `qwen-iq4`; each name is the checkpoint it loads, and asking for the model
+`%switch deepseek4.1` call the others in; each name is the checkpoint it loads, and asking for the model
 already running says so rather than loading it again. A machine that holds
 one model of its size cannot hold two, so the engine releases before it
 loads, and it checks that the room is really there: if it is not, nothing is
@@ -529,9 +499,9 @@ all of this for you; by hand, it is the other models named alongside the
 first:
 
 ```bash
-export ATHENA_MODEL=/models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local.gguf
-export ATHENA_DRAFT=/models/qwen-fp4/Qwen3.8-Flash-Next-FP4-Local-MTP.gguf
-export ATHENA_MMPROJ=/models/qwen/MMPROJ/mmproj-F16.gguf
+export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+export ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
+export ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf
 export ATHENA_MODEL_2=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
 export ATHENA_DRAFT_2=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
 export ATHENA_MODEL_3=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf

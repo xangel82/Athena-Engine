@@ -181,7 +181,6 @@ license of their respective publishers.
 |---|---|---|
 | DeepSeek V4 Flash (and its DSpark draft layers) | DeepSeek | MIT |
 | Qwen3.8 Flash Next (Unsloth's GGUF of it, the vision encoder and MTP head) | Qwen Team, Alibaba | Qwen Community License 1.0 |
-| Qwen3.8-Flash-Next-FP4-Local, converted on your machine | NVIDIA, from the Qwen Team's model | NVIDIA Open Model Agreement; its base under the Qwen Community License 1.0 |
 | Qwen3-TTS-12Hz-1.7B-Base, Qwen3-ASR-1.7B | Qwen Team, Alibaba | Apache License 2.0 |
 | Qwen3-Embedding-0.6B, Qwen3-Reranker-0.6B | Qwen Team, Alibaba | Apache License 2.0 |
 | EmbeddingGemma 2 | Google | Apache License 2.0, with the Gemma Prohibited Use Policy |

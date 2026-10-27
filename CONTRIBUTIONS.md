@@ -53,15 +53,8 @@ and the speech models the engine converts from their published weights:
 release ships, f-elegante, was designed from a text description with
 Qwen3-TTS-12Hz-1.7B-VoiceDesign: a synthetic voice, with no real speaker behind it.
 
-**NVIDIA** — [Qwen3.8-Flash-Next-FP4-Local](https://huggingface.co/nvidia/Qwen3.8-Flash-Next-FP4-Local),
-the quantization-aware distillation of Qwen3.8 Flash Next to NVFP4 experts and MXFP8
-layers, with its own MTP head, which the engine converts from the published checkpoint
-and runs by default. Licensed by NVIDIA Corporation under the NVIDIA Open Model
-Agreement; its base model is governed by the Qwen Community License 1.0.
-
 **Unsloth** — the [GGUF quantization of Qwen3.8 Flash Next](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF)
-the engine runs as an alternative, its MTP head, and the vision encoder, tokenizer and
-chat template the FP4 conversion takes from it.
+the engine runs, and its MTP head.
 
 **Lightricks** — [LTX 2.5](https://huggingface.co/Lightricks/LTX-2.5), the audio-video
 model behind `/v1/videos`: its diffusion transformer, video and audio VAEs, latent
