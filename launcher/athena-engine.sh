@@ -43,13 +43,14 @@
 #   ATHENA_KV_CAPACITY    live KV capacity        (DeepSeek default 8192)
 #   ATHENA_RESIDENCY      device or mapped        (DeepSeek default device,
 #                                                  Qwen default mapped)
-#   ATHENA_ROW_TABLE      resident or disk        (default resident).  disk:
-#                         Qwen's n-gram table (the PLE, 29 GB of an NVFP4
-#                         model) is read from the file a step at a time
-#                         instead of locked in memory, which leaves room
-#                         for voice beside it; the system may take its pages
-#                         back, and the steps then read them from the SSD.
-#                         Mapped residency only
+#   ATHENA_ROW_TABLE      disk or resident        (default disk with mapped
+#                         residency).  disk: Qwen's n-gram table (the PLE,
+#                         29 GB of an NVFP4 model) is read from the file a
+#                         step at a time instead of locked in memory, which
+#                         leaves room for voice beside it; the page cache
+#                         keeps the rows in use, and rows the system took
+#                         back are read from the SSD.  resident: locked
+#                         with the rest of the weights
 #   ATHENA_KV_DIR         durable KV cache dir    (default ~/.cache/athena-engine/kv,
 #                                                  empty string disables it)
 #   ATHENA_KV_SPACE_MB    durable KV budget in MB (default 16384)
