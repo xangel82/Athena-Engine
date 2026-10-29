@@ -674,14 +674,16 @@ hf_curl() { if [ -n "$HF_HEADER" ]; then curl -H "@$HF_HEADER" "$@"; else curl "
 # One request gives both facts: the digest, and the size — "x-linked-size"
 # for a file in LFS storage, the length of the final response for one kept in
 # git.  Printed as "<digest>|<size>"; either may be empty when the repository
-# cannot be reached.
+# cannot be reached.  A refusal (a private or gated repository, 401 or 403)
+# is not reached either: the length of its error page is no file's size.
 published_facts() {
   [ -n "${1:-}" ] || return 0
   hf_curl -sIL --max-time 30 "$1" 2>/dev/null | tr -d '\r' | awk '
+    $1 ~ /^HTTP\//                   { st = $2 }
     tolower($1) == "x-linked-etag:"  { d = $2; gsub(/"/, "", d) }
     tolower($1) == "x-linked-size:"  { s = $2 }
     tolower($1) == "content-length:" { n = $2 }
-    END { print d "|" (s != "" ? s : n) }'
+    END { if (st !~ /^2/) { print "|"; exit } print d "|" (s != "" ? s : n) }'
 }
 
 published_sha() { published_facts "${1:-}" | cut -d'|' -f1; }
