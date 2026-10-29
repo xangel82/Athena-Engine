@@ -47,7 +47,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 
 # Defaults for DeepSeek V4 Flash.  For Qwen3.8 Flash Next, override them at
 # run time (docker run -e, or compose environment:):
-#   ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+#   ATHENA_MODEL=/models/Athena-Logos/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-00001-of-00003.gguf
 #   ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
 #   ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf       (to answer about images)
 # For DeepSeek V4 Flash Vision-Exp, the DeepSeek that reads images:

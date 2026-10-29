@@ -99,8 +99,17 @@ Linux (arm64) from its [latest release](https://github.com/xangel82/Athena-Logos
 |---|---|---|---|---|
 | DeepSeek V4 Flash | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark sidecar | — |
 | DeepSeek V4 Flash Vision-Exp | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark drafter | images with `DeepSeek-V4-Flash-Vision-Encoder.gguf`; PDF, DOCX, Markdown, HTML, text |
-| Qwen3.8 Flash Next | Unsloth UD-IQ4_XS | 262,144 tokens | MTP head | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
+| Qwen3.8 Flash Next | Athena Logos: NVFP4 experts and n-gram table, MXFP8 projections | 262,144 tokens | MTP head | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
 | DeepSeek V4.1 Flash (1017) | IQ2_XXS gate/up and Q2_K down experts with imatrix, Q8 attention, shared experts and head, FP8 Engram tables | 16,384 tokens | — | — |
+
+Athena Logos is our own quantization of the Qwen Team's weights, made for the
+tensor cores of the GB10 and published at
+[xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF](https://huggingface.co/xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF)
+with the model's MTP head and vision encoder: the routed experts and the
+per-layer n-gram table in NVFP4, weighted by an importance matrix the engine
+collected while serving about 800,000 tokens of calibration prompts, tool
+calls included, and the dense projections in MXFP8. It runs on Athena's
+Engine 1.0.5 or later only.
 
 Vision-Exp is DeepSeek's experimental checkpoint that reads images. On text
 it scores a little below DeepSeek V4 Flash (see
@@ -141,6 +150,16 @@ the full 262,144-token context, KV checkpoints on disk, and the model's own
 draft — the DSpark sidecar for DeepSeek, the DSpark drafter published with
 Vision-Exp, the MTP head for Qwen. The raw data, and the machine and binary
 they were taken on, are in [docs/benchmarks/data](docs/benchmarks/data).
+
+The Qwen3.8 Flash Next columns and charts below were measured on the 4-bit
+IQ4_XS GGUF the engine ran up to 1.0.3. From 1.0.5 it runs Athena Logos,
+measured against that file on the same machine: with the same binary, an
+8k-token prompt read at 1,762 tokens/s instead of 1,277, 39.6 tokens/s
+written after it instead of 37.9; a short chat answer comes at 46.6 tokens/s
+instead of 41.6. A 256k-token prompt right after a 196k one is read at 1,167
+tokens/s. On tool-eval-bench 2.7 at temperature 1.0 (seed 42,
+`--parallel 4`) Athena Logos scores 88 out of 100, and the IQ4_XS 86 to 88
+with the same settings.
 
 ### Reading a long document
 
@@ -275,8 +294,8 @@ V4 Flash took 55 seconds.
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:1.0.3
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.0.3
+   docker pull ghcr.io/xangel82/athena-engine:1.0.5
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.0.5
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```
@@ -298,9 +317,9 @@ V4 Flash took 55 seconds.
    ./athena-engine/install.sh --model qwen --voice --rag --video   # and speech, search and video
    ```
 
-   It downloads about 97 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
-   Flash, 94 GB for DeepSeek V4 Flash Vision-Exp, 184 GB for Qwen and
-   DeepSeek or 278 GB for all three. DeepSeek V4.1 Flash is 366 GB more, and
+   It downloads about 108 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
+   Flash, 94 GB for DeepSeek V4 Flash Vision-Exp, 195 GB for Qwen and
+   DeepSeek or 289 GB for all three. DeepSeek V4.1 Flash is 366 GB more, and
    only when you name it: `all` means the other three, and the menu offers it
    as a choice of its own. The installer checks each file against the checksum
    the repository publishes, and **resumes**: stop it at any point, run the
@@ -360,7 +379,7 @@ V4 Flash took 55 seconds.
    For Qwen3.8 Flash Next, point at the first part of the model:
 
    ```bash
-   export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+   export ATHENA_MODEL=/models/Athena-Logos/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-00001-of-00003.gguf
    export ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
    export ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf
    ./athena-engine/athena-engine.sh
@@ -499,7 +518,7 @@ all of this for you; by hand, it is the other models named alongside the
 first:
 
 ```bash
-export ATHENA_MODEL=/models/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf
+export ATHENA_MODEL=/models/Athena-Logos/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-00001-of-00003.gguf
 export ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
 export ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf
 export ATHENA_MODEL_2=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
@@ -613,7 +632,7 @@ included: a request for any other model is answered with `404 model_not_found`.
 ## Requirements
 
 An NVIDIA GB10 with 128 GB of unified memory, DGX OS, and about 93 GB
-(DeepSeek V4 Flash), 94 GB (DeepSeek V4 Flash Vision-Exp), 97 GB (Qwen3.8
+(DeepSeek V4 Flash), 94 GB (DeepSeek V4 Flash Vision-Exp), 108 GB (Qwen3.8
 Flash Next) or 366 GB (DeepSeek V4.1 Flash) of disk for each model's files —
 V4.1's on a fast local SSD, since the engine reads from it as it runs.
 Speech takes about 14 GB more, search about 7 GB and video 71 GB, and video

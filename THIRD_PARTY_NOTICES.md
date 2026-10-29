@@ -174,13 +174,14 @@ with NVENC otherwise.
 ## Model weights
 
 Model weights are not part of Athena's Engine and are not distributed with it:
-the installer fetches them from their authors, and they are subject to the
-license of their respective publishers.
+the installer fetches them from their authors — Qwen3.8 Flash Next from our
+quantization of the Qwen Team's weights — and they are subject to the license
+of their respective publishers.
 
 | Model | Publisher | License |
 |---|---|---|
 | DeepSeek V4 Flash (and its DSpark draft layers) | DeepSeek | MIT |
-| Qwen3.8 Flash Next (Unsloth's GGUF of it, the vision encoder and MTP head) | Qwen Team, Alibaba | Qwen Community License 1.0 |
+| Qwen3.8 Flash Next (Athena Logos, our quantization of it; the vision encoder and MTP head in Unsloth's GGUF) | Qwen Team, Alibaba | Qwen Community License 1.0 |
 | Qwen3-TTS-12Hz-1.7B-Base, Qwen3-ASR-1.7B | Qwen Team, Alibaba | Apache License 2.0 |
 | Qwen3-Embedding-0.6B, Qwen3-Reranker-0.6B | Qwen Team, Alibaba | Apache License 2.0 |
 | EmbeddingGemma 2 | Google | Apache License 2.0, with the Gemma Prohibited Use Policy |

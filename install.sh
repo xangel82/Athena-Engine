@@ -68,10 +68,10 @@ done
 # The role names what the file is to the engine and decides the variable it
 # is given to in athena.env.
 HF="https://huggingface.co"
-QWEN_REPO="$HF/unsloth/Qwen3.8-Flash-Next-GGUF/resolve/main"
+QWEN_REPO="$HF/xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF/resolve/main"
 DEEPSEEK_REPO="$HF/antirez/deepseek-v4-gguf/resolve/main"
 DSPARK_REPO="$HF/deepseek-ai/DeepSeek-V4-Flash-DSpark/resolve/main"
-QWEN_PARTS="Qwen3.8-Flash-Next-UD-IQ4_XS"
+QWEN_PARTS="Qwen3.8-Flash-Next-NVFP4-Athena-Logos"
 DEEPSEEK_MODEL="DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf"
 DSPARK_FILE="DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf"
 VISION_MODEL="DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf"
@@ -80,12 +80,16 @@ VISION_ENCODER="DeepSeek-V4-Flash-Vision-Encoder.gguf"
 DEEPSEEK41_REPO="$HF/antirez/deepseek-v4.1-flash-gguf/resolve/main"
 DEEPSEEK41_MODEL="DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf"
 
+# Qwen3.8 Flash Next as Athena Logos: our NVFP4 quantization of the Qwen
+# Team's own weights, in three parts, with the MTP head and the vision encoder
+# beside them.  Those two are the files earlier releases fetched, kept under
+# the same paths, so a machine that has them does not download them again.
 qwen_files() {
   cat <<EOF
-UD-IQ4_XS/$QWEN_PARTS-00001-of-00003.gguf|$QWEN_REPO/UD-IQ4_XS/$QWEN_PARTS-00001-of-00003.gguf|11 MB|model
-UD-IQ4_XS/$QWEN_PARTS-00002-of-00003.gguf|$QWEN_REPO/UD-IQ4_XS/$QWEN_PARTS-00002-of-00003.gguf|50 GB|part
-UD-IQ4_XS/$QWEN_PARTS-00003-of-00003.gguf|$QWEN_REPO/UD-IQ4_XS/$QWEN_PARTS-00003-of-00003.gguf|47 GB|part
-MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|$QWEN_REPO/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|2.6 GB|draft
+Athena-Logos/$QWEN_PARTS-00001-of-00003.gguf|$QWEN_REPO/$QWEN_PARTS-00001-of-00003.gguf|35 GB|model
+Athena-Logos/$QWEN_PARTS-00002-of-00003.gguf|$QWEN_REPO/$QWEN_PARTS-00002-of-00003.gguf|35 GB|part
+Athena-Logos/$QWEN_PARTS-00003-of-00003.gguf|$QWEN_REPO/$QWEN_PARTS-00003-of-00003.gguf|34 GB|part
+MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|$QWEN_REPO/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf|2.8 GB|draft
 MMPROJ/mmproj-F16.gguf|$QWEN_REPO/mmproj-F16.gguf|0.9 GB|mmproj
 EOF
 }
@@ -993,12 +997,12 @@ main() {
   if [ -z "$CHOICE" ]; then
     say ""
     say "Which model would you like to install?"
-    say "  1) Qwen3.8 Flash Next            — 97 GB, reads images, the fastest"
+    say "  1) Qwen3.8 Flash Next            — 108 GB, reads images, the fastest"
     say "  2) DeepSeek V4 Flash             — 87 GB"
     say "  3) DeepSeek V4 Flash Vision-Exp  — 94 GB, reads images"
-    say "  4) Qwen and DeepSeek             — 184 GB; one runs, and a conversation"
+    say "  4) Qwen and DeepSeek             — 195 GB; one runs, and a conversation"
     say "                                     calls the other in with %switch"
-    say "  5) all three                     — 278 GB"
+    say "  5) all three                     — 289 GB"
     say "  6) DeepSeek V4.1 Flash           — 366 GB, more than memory holds: the"
     say "                                     engine reads it from the disk as it runs"
     say "Several numbers, as in 1,6, install each; the first is the one that starts."

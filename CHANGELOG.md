@@ -1,5 +1,75 @@
 # Changelog
 
+## 1.0.5 - 2026-10-29
+
+Qwen3.8 Flash Next is now Athena Logos, our own four-bit quantization of
+the Qwen Team's weights, and a long prompt no longer stops the
+conversations that are answering. 1.0.4 was not published; what it
+brought is here too.
+
+### Qwen3.8 Flash Next as Athena Logos
+
+- `install.sh --model qwen` fetches Athena Logos from
+  [xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF](https://huggingface.co/xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF):
+  the Qwen Team's own BF16 weights quantized for the tensor cores of the
+  GB10, the routed experts and the per-layer n-gram table in NVFP4 —
+  weighted by an importance matrix the engine collected while serving about
+  800,000 tokens of calibration prompts, tool calls included — and the
+  dense projections in MXFP8. Against the 4-bit IQ4_XS earlier releases
+  ran, with the same binary on one GB10: an 8k-token prompt is read at
+  1,762 tokens/s instead of 1,277, the answer after it written at 39.6
+  tokens/s instead of 37.9; a short chat answer comes at 46.6 instead of
+  41.6. tool-eval-bench 2.7 (temperature 1.0, seed 42, `--parallel 4`)
+  scores it 88; the IQ4_XS scored 86 to 88 with the same settings.
+- The MTP head and the vision encoder come from the same repository and
+  are the files earlier releases fetched: a machine that installed 1.0.3
+  keeps them and downloads the three parts of the model, 104 GB. The
+  `UD-IQ4_XS` folder it leaves behind is no longer used and can be
+  deleted.
+- Athena Logos runs on Athena's Engine 1.0.5 or later only: its experts
+  and n-gram table are stored in tensor types the engine defines for its
+  GB10 kernels.
+- The n-gram table, 28.8 GB of Athena Logos, is read from the disk
+  instead of locked in memory: each step reads the rows it needs from the
+  file, and the machine keeps the pages it uses in its cache. With the
+  voice loaded, 24.5 GiB are left for the conversations instead of 2; the
+  speed is that of the table in memory within a few per cent.
+  `ATHENA_ROW_TABLE=resident` locks it in memory as before.
+- A turn cut by its length limit in the middle of a multi-byte character
+  no longer publishes half of it: the client got a 500 instead of the
+  answer.
+- A conversation no longer pauses for up to a second every seven seconds
+  to capture the graphs of its steps again: they now hold for an eighth of
+  the context window.
+- `ATHENA_IMATRIX=FILE` has the engine collect the routed experts'
+  importance matrix while it serves, in llama.cpp's layout: it is how
+  Athena Logos was calibrated.
+
+### Several conversations at once
+
+- A long prompt gives the machine to the conversations that are answering
+  between its chunks. While a 30k-token prompt was read, a chat's longest
+  pause went from 17.1 to 4.7 seconds, with or without an image; the
+  prompt took 21.9 seconds instead of 21.0, and every answer is the same
+  bytes as before.
+- When several conversations verify their drafts together, the step is
+  captured as a CUDA graph once and replayed: two conversations went from
+  52.1 to 53.9 tokens a second together, three from 54.4 to 55.5.
+- A new prompt no longer takes the place of a long conversation another
+  lane could give up: it goes to a lane holding little, then to the
+  smallest. On a 31k-token chat with an image, the next message after
+  twelve short requests answered from its cache in 3.1 seconds instead of
+  21.3.
+
+### Coming back to a conversation
+
+- A conversation with images is saved to disk too, keyed by its pictures:
+  after a restart, a 31k-token chat with an image came back in 4.7 seconds
+  instead of 21.5 and gave the same answer as before the restart.
+- A save to disk waiting on a point that rewinding the conversation takes
+  back is written first: a session back from a restart restored 35,946
+  tokens instead of the 47,861 its lane had saved.
+
 ## 1.0.3 - 2026-10-27
 
 Several conversations served at once now share each step of the model, and

@@ -53,8 +53,10 @@ and the speech models the engine converts from their published weights:
 release ships, f-elegante, was designed from a text description with
 Qwen3-TTS-12Hz-1.7B-VoiceDesign: a synthetic voice, with no real speaker behind it.
 
-**Unsloth** — the [GGUF quantization of Qwen3.8 Flash Next](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF)
-the engine runs, and its MTP head.
+**Unsloth** — the [GGUF of Qwen3.8 Flash Next](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF)
+the engine ran up to 1.0.3, on which the importance matrix of Athena Logos was
+collected, and the chat template, MTP head and vision encoder in GGUF form that
+Athena Logos is published with.
 
 **Lightricks** — [LTX 2.5](https://huggingface.co/Lightricks/LTX-2.5), the audio-video
 model behind `/v1/videos`: its diffusion transformer, video and audio VAEs, latent

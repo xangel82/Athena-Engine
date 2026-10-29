@@ -1,6 +1,6 @@
 # Requirements
 
-Validated configuration for release 1.0.3.
+Validated configuration for release 1.0.5.
 
 ## Hardware
 
@@ -72,15 +72,25 @@ All three are published as files, so nothing is built on the machine. The
 encoder belongs to this checkpoint only; the launcher refuses it beside the
 model above.
 
-### Qwen3.8 Flash Next — about 97 GB
+### Qwen3.8 Flash Next — about 108 GB
 
-From [unsloth/Qwen3.8-Flash-Next-GGUF](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF):
+Athena Logos, our NVFP4 quantization of
+[Qwen/Qwen3.8-Flash-Next](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) at revision
+`de4b8e4d43b917e7706784d8bb445c9af86a3540`, from
+[xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF](https://huggingface.co/xangel82/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-GGUF):
 
 | File | Role |
 |---|---|
-| `UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf` and the two parts that follow it | target model |
-| `MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf` | MTP head (speculative decoding) |
+| `Qwen3.8-Flash-Next-NVFP4-Athena-Logos-00001-of-00003.gguf` and the two parts that follow it | target model |
+| `mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf` | MTP head (speculative decoding) |
 | `mmproj-F16.gguf` | vision encoder — without it the model answers text only |
+
+The three parts are one 104 GB file (sha256 `5ac66e73…`) in llama.cpp's split
+layout. Its experts and n-gram table are stored in tensor types the engine
+defines for the GB10, so it runs on this engine, 1.0.5 or later, and on
+nothing else. The MTP head and the vision encoder are the files earlier
+releases fetched: the installer keeps them under `MTP/` and `MMPROJ/` as
+before, and a machine that has them downloads only the model.
 
 ### DeepSeek V4.1 Flash — about 366 GB
 
