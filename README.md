@@ -45,7 +45,7 @@ is the assistant built on top of it. Talk to her, bring your documents and
 your ideas, work on a project together: she has a voice, a memory, a Library
 and tools, on your own machines and from your phone. Athena Logos works with
 any OpenAI-compatible server, and Athena's Engine is the one it is made for.
-Download Athena Logos 1.0.0 for Windows (x64), macOS (Apple silicon) and
+Download Athena Logos 1.1.0 for Windows (x64), macOS (Apple silicon) and
 Linux (arm64) from its [latest release](https://github.com/xangel82/Athena-Logos/releases/latest).
 
 ## What it does
@@ -151,15 +151,21 @@ draft — the DSpark sidecar for DeepSeek, the DSpark drafter published with
 Vision-Exp, the MTP head for Qwen. The raw data, and the machine and binary
 they were taken on, are in [docs/benchmarks/data](docs/benchmarks/data).
 
-The Qwen3.8 Flash Next columns and charts below were measured on the 4-bit
-IQ4_XS GGUF the engine ran up to 1.0.3. From 1.0.5 it runs Athena Logos,
-measured against that file on the same machine: with the same binary, an
-8k-token prompt read at 1,762 tokens/s instead of 1,277, 39.6 tokens/s
-written after it instead of 37.9; a short chat answer comes at 46.6 tokens/s
-instead of 41.6. A 256k-token prompt right after a 196k one is read at 1,167
-tokens/s. On tool-eval-bench 2.7 at temperature 1.0 (seed 42,
-`--parallel 4`) Athena Logos scores 88 out of 100, and the IQ4_XS 86 to 88
-with the same settings.
+From 1.0.5 Qwen3.8 Flash Next runs as Athena Logos. Against the 4-bit IQ4_XS
+GGUF the engine ran up to 1.0.3, on the same machine with the same 1.0.5
+binary:
+
+| Qwen3.8 Flash Next | Athena Logos | IQ4_XS |
+|---|---|---|
+| Prefill, 8k-token prompt | **1,762 tokens/s** | 1,277 tokens/s |
+| Generation after an 8k prompt | **39.6 tokens/s** | 37.9 tokens/s |
+| Generation, a short chat answer | **46.6 tokens/s** | 41.6 tokens/s |
+| tool-eval-bench 2.7, temperature 1.0, seed 42, `--parallel 4` | 88 | 86 to 88 |
+
+The Qwen3.8 Flash Next columns and charts below are still the IQ4_XS's,
+measured with 0.3.4: Athena Logos has not been measured at every length yet.
+The 1.0.5 binary reads the IQ4_XS's 196k and 256k prompts at 1,209 and 1,167
+tokens/s, against the 1,128 and 1,122 in the table.
 
 ### Reading a long document
 
