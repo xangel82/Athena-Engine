@@ -11,9 +11,9 @@ DeepSeek-V4-Flash-Vision-Exp,decode,default,64k,63948,256,24.18
 DeepSeek-V4-Flash-Vision-Exp,decode,default,128k,127981,256,24.33
 DeepSeek-V4-Flash-Vision-Exp,decode,default,196k,196114,256,18.27
 DeepSeek-V4-Flash-Vision-Exp,decode,default,256k,256197,256,21.14
-Qwen3.8-Flash-Next,decode,default,8k,7724,256,35.67
-Qwen3.8-Flash-Next,decode,default,32k,31255,256,34.38
-Qwen3.8-Flash-Next,decode,default,64k,62687,256,36.04
-Qwen3.8-Flash-Next,decode,default,128k,124034,256,33.91
-Qwen3.8-Flash-Next,decode,default,196k,190364,256,33.74
-Qwen3.8-Flash-Next,decode,default,256k,241176,256,33.43
+Qwen3.8-Flash-Next-Athena-Logos,decode,default,8k,7755,256,39.03
+Qwen3.8-Flash-Next-Athena-Logos,decode,default,32k,31286,256,41.00
+Qwen3.8-Flash-Next-Athena-Logos,decode,default,64k,62721,256,40.90
+Qwen3.8-Flash-Next-Athena-Logos,decode,default,128k,124067,256,37.94
+Qwen3.8-Flash-Next-Athena-Logos,decode,default,196k,190399,256,35.56
+Qwen3.8-Flash-Next-Athena-Logos,decode,default,256k,241206,256,37.16

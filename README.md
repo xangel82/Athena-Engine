@@ -50,7 +50,7 @@ Linux (arm64) from its [latest release](https://github.com/xangel82/Athena-Logos
 
 ## What it does
 
-- **Long context that stays fast.** Prefill holds 920–1,230 tokens/s from 8k
+- **Long context that stays fast.** Prefill holds 920–1,760 tokens/s from 8k
   all the way to the full 256k context, and generation does not slow down as
   the conversation grows.
 - **A conversation is not read twice.** Every model keeps its context on
@@ -162,10 +162,11 @@ binary:
 | Generation, a short chat answer | **46.6 tokens/s** | 41.6 tokens/s |
 | tool-eval-bench 2.7, temperature 1.0, seed 42, `--parallel 4` | 88 | 86 to 88 |
 
-The Qwen3.8 Flash Next columns and charts below are still the IQ4_XS's,
-measured with 0.3.4: Athena Logos has not been measured at every length yet.
-The 1.0.5 binary reads the IQ4_XS's 196k and 256k prompts at 1,209 and 1,167
-tokens/s, against the 1,128 and 1,122 in the table.
+The Qwen3.8 Flash Next columns and charts below are Athena Logos, measured
+on 2026-10-30 with 1.0.5 on the running engine, one request at a time; its
+prefill is timed from the engine's log, from the end of the previous
+request's save to the first token. With the IQ4_XS on 0.3.4 the same columns
+read 1,230 to 1,122 tokens/s and wrote 33 to 36.
 
 ### Reading a long document
 
@@ -174,20 +175,20 @@ tokens/s, against the 1,128 and 1,122 in the table.
 </p>
 
 The prefill phase as the server times it, on a fresh prompt nobody has asked
-before. Between 8k and 256k tokens the rate falls by 9 to 18 per cent —
+before. Between 8k and 256k tokens the rate falls by 11 to 18 per cent —
 thirty-two times the context for at most a sixth of the speed.
 
-| Prompt | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
+| Prompt | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next (Athena Logos) |
 |---|---|---|---|
-| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,230 tokens/s |
-| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,209 tokens/s |
-| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,199 tokens/s |
-| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,177 tokens/s |
-| 196k | 1,025 tokens/s | 998 tokens/s | 1,128 tokens/s |
-| 256k | 995 tokens/s | 919 tokens/s | 1,122 tokens/s |
+| 8k | 1,171 tokens/s | 1,127 tokens/s | 1,763 tokens/s |
+| 32k | 1,144 tokens/s | 1,111 tokens/s | 1,749 tokens/s |
+| 64k | 1,121 tokens/s | 1,095 tokens/s | 1,667 tokens/s |
+| 128k | 1,075 tokens/s | 1,044 tokens/s | 1,670 tokens/s |
+| 196k | 1,025 tokens/s | 998 tokens/s | 1,522 tokens/s |
+| 256k | 995 tokens/s | 919 tokens/s | 1,562 tokens/s |
 
 A quarter of a million tokens — a 700-page book — is read in less than five
-minutes.
+minutes, and by Qwen3.8 Flash Next in two and a half.
 
 ### Generating an answer
 
@@ -200,16 +201,17 @@ so the reading of the prompt is not counted. What matters here is the shape:
 it is flat. No model slows down as the conversation grows — the spread
 between neighbouring points is the run-to-run variation, not a trend.
 
-| Context | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next |
+| Context | DeepSeek V4 Flash | DeepSeek V4 Flash Vision-Exp | Qwen3.8 Flash Next (Athena Logos) |
 |---|---|---|---|
-| 8k | 22.5 tokens/s | 16.6 tokens/s | 35.7 tokens/s |
-| 32k | 20.3 tokens/s | 19.0 tokens/s | 34.4 tokens/s |
-| 64k | 19.8 tokens/s | 24.2 tokens/s | 36.0 tokens/s |
-| 128k | 21.4 tokens/s | 24.3 tokens/s | 33.9 tokens/s |
-| 196k | 19.2 tokens/s | 18.3 tokens/s | 33.7 tokens/s |
-| 256k | 19.6 tokens/s | 21.1 tokens/s | 33.4 tokens/s |
+| 8k | 22.5 tokens/s | 16.6 tokens/s | 39.0 tokens/s |
+| 32k | 20.3 tokens/s | 19.0 tokens/s | 41.0 tokens/s |
+| 64k | 19.8 tokens/s | 24.2 tokens/s | 40.9 tokens/s |
+| 128k | 21.4 tokens/s | 24.3 tokens/s | 37.9 tokens/s |
+| 196k | 19.2 tokens/s | 18.3 tokens/s | 35.6 tokens/s |
+| 256k | 19.6 tokens/s | 21.1 tokens/s | 37.2 tokens/s |
 
-Qwen is the fastest because it is the smallest model; DeepSeek V4 Flash
+Qwen is the fastest because it is the smallest model, and its line moves by a
+few tokens a second with how many of its MTP drafts each text accepts; DeepSeek V4 Flash
 answers at a steady twenty tokens a second whether the conversation holds
 eight thousand tokens or a quarter of a million. Vision-Exp averages the
 same twenty, but its line moves more: speculative decoding gains only the

@@ -12,6 +12,16 @@
   "launcher": "athena-engine.sh (Athena-Engine 7086b11)",
   "date": "2026-09-22T06:57:06+0000",
   "measurements": {
+    "Qwen3.8 Flash Next as Athena Logos at every length (prefill_phase.csv, decode.csv, the README's Qwen columns and charts)": {
+      "date": "2026-10-30T01:55:26+0000",
+      "release": "1.0.5",
+      "binary": "the production build installed on Athena: 1.0.5 with two fixes that do not touch the model's step (a client hang-up no longer blocks the listener; a rewind point short of memory asks the memory guardian), VERSION 1.0.5-c23 source 3d4d02657, server sha256 3191414e75de7b2f83ddd2d1e815e14b3c2f24a9931abbdbf7f9e25e273d7ffb",
+      "binary_md5": "eccebee4c8fde9a1d5c2b81d4e2d5c40",
+      "model": "Qwen3.8-Flash-Next-NVFP4-Athena-Logos.gguf (sha256 5ac66e73...), MTP head mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf, vision encoder loaded",
+      "launcher": "athena-engine.sh of 1.0.5 as production runs it: 262,144-token context, KV checkpoints and durable saves on disk, the n-gram table read from the disk, voice and retrieval beside it",
+      "method": "the production engine left running, nobody else using it (requests 26 to 33 in a row in its log, no other request between them). Two throw-away 8k prompts, then one fresh prompt per length (a new session line in front, so nothing cached) asking for a three-sentence summary in 256 tokens at temperature 0, streamed. Prefill: from the end of the previous request's durable save (DURABLE_KV write done, which a request sent right after another waits for) to the first sampled token (THOUGHT_FIRST), both from the engine's log; at 8k this gives 1,763.1 tokens/s, against 1,762.0 from the gate's DS4_PHASE_TRACE timing of the same build family on 2026-10-29. Generation: tokens after the first over the time from the first streamed token to the last, as ab_bench.py measures it. One repetition per length.",
+      "results": "prefill 1,763.1 / 1,749.1 / 1,666.9 / 1,670.3 / 1,522.0 / 1,561.8 tokens/s at 7,755 / 31,286 / 62,721 / 124,067 / 190,399 / 241,206 tokens; generation after them 39.03 / 41.00 / 40.90 / 37.94 / 35.56 / 37.16 tokens/s. The time to the first token as the client saw it, including the previous request's save: 4.91 / 18.41 / 39.07 / 76.80 / 129.20 / 163.34 s"
+    },
     "Qwen3.8 Flash Next's speed and answers, 0.3.4 against 0.3.3 (the CHANGELOG's 0.3.4 figures)": {
       "date": "2026-10-13",
       "commit": "691d4988",

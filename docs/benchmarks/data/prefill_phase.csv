@@ -11,9 +11,9 @@ DeepSeek-V4-Flash-Vision-Exp,L64k,63967,58396.759,1095.4,1
 DeepSeek-V4-Flash-Vision-Exp,L128k,128003,122642.944,1043.7,1
 DeepSeek-V4-Flash-Vision-Exp,L196k,196135,196610.507,997.6,1
 DeepSeek-V4-Flash-Vision-Exp,L256k,256216,278678.388,919.4,1
-Qwen3.8-Flash-Next,L8k,7742,6294.911,1229.9,1
-Qwen3.8-Flash-Next,L32k,31274,25872.422,1208.8,1
-Qwen3.8-Flash-Next,L64k,62705,52309.185,1198.7,1
-Qwen3.8-Flash-Next,L128k,124053,105366.680,1177.3,1
-Qwen3.8-Flash-Next,L196k,190382,168759.122,1128.1,1
-Qwen3.8-Flash-Next,L256k,241196,215074.578,1121.5,1
+Qwen3.8-Flash-Next-Athena-Logos,L8k,7755,4398.481,1763.1,1
+Qwen3.8-Flash-Next-Athena-Logos,L32k,31286,17886.567,1749.1,1
+Qwen3.8-Flash-Next-Athena-Logos,L64k,62721,37627.256,1666.9,1
+Qwen3.8-Flash-Next-Athena-Logos,L128k,124067,74279.826,1670.3,1
+Qwen3.8-Flash-Next-Athena-Logos,L196k,190399,125096.900,1522.0,1
+Qwen3.8-Flash-Next-Athena-Logos,L256k,241206,154440.896,1561.8,1
