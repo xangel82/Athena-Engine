@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0.5 - 2026-10-29
+## 1.0.5 - 2026-10-30
 
 Qwen3.8 Flash Next is now Athena Logos, our own four-bit quantization of
 the Qwen Team's weights, and a long prompt no longer stops the
