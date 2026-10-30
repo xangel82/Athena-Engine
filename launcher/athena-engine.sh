@@ -13,10 +13,11 @@
 #   ATHENA_IMAGE_TOKENS   budget per image        (default 1024)
 #   ATHENA_MODEL_2        a second model the engine can be told to load
 #                         while it runs, by writing "%switch <name>" in a
-#                         conversation: qwen, deepseek, visio for DeepSeek
-#                         with its vision encoder, or deepseek4.1 for
-#                         DeepSeek V4.1 Flash, which is larger than the
-#                         machine and streams its experts from the SSD
+#                         conversation: qwen, qwen27b for Qwen3.8-27B,
+#                         deepseek, visio for DeepSeek with its vision
+#                         encoder, or deepseek4.1 for DeepSeek V4.1 Flash,
+#                         which is larger than the machine and streams its
+#                         experts from the SSD
 #   ATHENA_DRAFT_2        its speculative decoding head
 #   ATHENA_MMPROJ_2       its vision encoder, if it has one
 #   ATHENA_MODEL_3        a third one, with ATHENA_DRAFT_3 and ATHENA_MMPROJ_3
@@ -26,7 +27,8 @@
 #                         model: serve it by its family name
 #   ATHENA_MODEL_NAME     serve this exact name instead of either
 #   ATHENA_MODEL_FAMILY   deepseek-v4-flash, deepseek-v4-flash-vision,
-#                         deepseek-v4.1-flash or qwen3.8-flash-next
+#                         deepseek-v4.1-flash, qwen3.8-flash-next or
+#                         qwen3.8-27b
 #                         (default: read from the model file)
 #   ATHENA_BIND           listen address          (default 0.0.0.0)
 #   ATHENA_API_KEY        a key every client must send, as
@@ -114,7 +116,7 @@ model="${ATHENA_MODEL:-}"
 # lengths blanked out.
 model_family() {
   local path="$1" arch variant
-  arch="$(head -c 65536 "$path" | LC_ALL=C grep -a -o -E 'deepseek41|deepseek4|qwen4exp' | head -n 1 || true)"
+  arch="$(head -c 65536 "$path" | LC_ALL=C grep -a -o -E 'deepseek41|deepseek4|qwen4exp|qwen35' | head -n 1 || true)"
   case "$arch" in
     deepseek41) echo deepseek-v4.1-flash ;;
     deepseek4)
@@ -127,6 +129,7 @@ model_family() {
       esac
       ;;
     qwen4exp) echo qwen3.8-flash-next ;;
+    qwen35) echo qwen3.8-27b ;;
   esac
 }
 
@@ -164,12 +167,12 @@ case "$family" in
     kv_capacity="$v41_context"
     streams=1
     ;;
-  qwen3.8-flash-next)
+  qwen3.8-flash-next|qwen3.8-27b)
     draft_flag=--mtp
     residency="${ATHENA_RESIDENCY:-mapped}"
     kv_capacity="${ATHENA_KV_CAPACITY:-}"
     ;;
-  *) fail "unsupported model family: $family (deepseek-v4-flash, deepseek-v4-flash-vision, deepseek-v4.1-flash or qwen3.8-flash-next)" ;;
+  *) fail "unsupported model family: $family (deepseek-v4-flash, deepseek-v4-flash-vision, deepseek-v4.1-flash, qwen3.8-flash-next or qwen3.8-27b)" ;;
 esac
 
 args=(--model "$model"
@@ -228,6 +231,7 @@ register_model() {  # model, draft, mmproj
     deepseek-v4-flash-vision) name=visio ;;
     deepseek-v4.1-flash) name=deepseek4.1 ;;
     qwen3.8-flash-next) name=qwen ;;
+    qwen3.8-27b) name=qwen27b ;;
     *) fail "cannot tell the model family of $path" ;;
   esac
   [ "$fam" != deepseek-v4-flash ] || [ -z "$mmproj" ] ||
@@ -246,7 +250,7 @@ register_model() {  # model, draft, mmproj
   entry="$name=$path,family=$fam"
   if [ "$fam" = deepseek-v4.1-flash ]; then
     entry="$entry,residency=mapped,kv=$v41_context,context=$v41_context"
-  elif [ "$fam" != qwen3.8-flash-next ]; then
+  elif [ "$fam" != qwen3.8-flash-next ] && [ "$fam" != qwen3.8-27b ]; then
     entry="$entry,residency=device,kv=${ATHENA_KV_CAPACITY:-8192},context=$server_context"
     [ -n "$draft" ] && entry="$entry,draft=$draft"
   else
