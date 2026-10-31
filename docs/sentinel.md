@@ -232,7 +232,13 @@ minutes without a break, with nothing else on the machine meanwhile.
     process, as `"PID NAME"`; a hold whose process is gone holds nothing;
   - another engine answers on the engine's port;
   - the GPU is busy (10% or more), or cannot be read;
-  - less than 100 GiB of memory is available.
+  - for an engine that is down, less than 110 GiB of memory is available
+    (with no engine a 121 GiB machine has 118–119: at most about 9 GiB may
+    be held by something else).
+- A silent engine is stopped first; it is started again only once 110 GiB
+  are available, measured after its stop (waiting up to five minutes for
+  its memory to come back). Otherwise it is left down (`watch.left_down`
+  in the log) and started by a later check once the memory is back.
 - A start or a restart it asks for follows the same rules as one asked for
   here (once a minute, not while another is under way), and is in the
   companion's log as `watch.acted`. With the engine back it starts the
