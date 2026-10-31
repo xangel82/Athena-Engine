@@ -207,6 +207,37 @@ off as current: the units become `unknown` and the GPU figures `null`.
   companion, `systemctl --user start athena-engine`, or a reboot when the
   unit is enabled.
 
+### `GET` and `POST /system/services/engine/watch`
+
+The watch is the user's choice, off until asked for: every so many minutes
+the companion looks at the engine, and brings it back when it found it
+down — or restarts it when it found it running without answering — for ten
+minutes without a break, with nothing else on the machine meanwhile.
+
+```json
+{ "minutes": 60, "quietMinutes": 10, "lastCheckAt": 1792530000000,
+  "lastResult": "the engine answers", "kept": true }
+```
+
+- `POST {"minutes": N}`: `0` turns the watch off, `5` to `1440` sets the
+  interval, counted from now. Anything else is `400 bad_request`. The
+  choice is kept in `~/.config/athena-engine/sentinel-watch.json` and comes
+  back at the companion's next start (`kept`); `--watch-minutes N` gives
+  the interval when that file says nothing.
+- It leaves the engine down, and `lastResult` says why, when:
+  - the engine was stopped through the companion (until a start or a
+    restart is asked for);
+  - a tool keeps it down on purpose: the hold file
+    (`$XDG_RUNTIME_DIR/athena-production.hold`, `--hold-file`) names a live
+    process, as `"PID NAME"`; a hold whose process is gone holds nothing;
+  - another engine answers on the engine's port;
+  - the GPU is busy (10% or more), or cannot be read;
+  - less than 100 GiB of memory is available.
+- A start or a restart it asks for follows the same rules as one asked for
+  here (once a minute, not while another is under way), and is in the
+  companion's log as `watch.acted`. With the engine back it starts the
+  proxy too, when the proxy is a user unit and was down.
+
 ### `GET /system/models`
 
 Every model the engine was started with, of every kind, as its launcher
