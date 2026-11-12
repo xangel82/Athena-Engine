@@ -160,7 +160,6 @@ Against 1.0.5, on the same machine and the same way:
 |---|---|---|
 | Athena Logos, prefill of an 8k-token prompt | **2,440 tokens/s** | 1,763 tokens/s |
 | Athena Logos, prefill of a 256k-token prompt | **2,137 tokens/s** | 1,562 tokens/s |
-| Athena Logos, generation after an 8k prompt | **46.0 tokens/s** | 39.0 tokens/s |
 | DeepSeek V4 Flash, prefill of an 8k-token prompt | **1,303 tokens/s** | 1,171 tokens/s |
 | DeepSeek V4 Flash, generation after an 8k prompt | **27.3 tokens/s** | 22.5 tokens/s |
 | Vision-Exp, prefill of an 8k-token prompt | **1,308 tokens/s** | 1,127 tokens/s |
