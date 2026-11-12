@@ -1,5 +1,81 @@
 # Changelog
 
+## 1.1.0 - 2026-11-12
+
+One engine now serves every model. DeepSeek V4 Flash, its Vision-Exp and
+V4.1 run on the same trunk as Athena Logos, with the same lanes, the same
+points to resume from and the same files on disk; the separate path they
+used to take is gone. Athena Logos reads a long prompt about 40% faster.
+
+### Athena Logos
+
+- A long prompt is read faster: about 2,450 tokens/s at 8k instead of
+  1,762, about 2,400 at 32k instead of 1,749, on the same GB10. The
+  attention of the full-attention layers takes one launch block per query
+  and key/value group, the hyper-connections and the routed experts' closing
+  sum run fused, and the gated delta rule is computed in chunks on the
+  tensor cores, as the Qwen Team's own code computes it.
+- Answers are no longer byte-identical to 1.0.5's: the chunked delta rule
+  and the experts' outputs kept in BF16, as the authors keep them, change
+  the last bits of the arithmetic. The answer after an 8k prompt is written
+  at the same speed, 45 tokens/s on the engine's own gate.
+- A turn that would end inside its thought closes the thought and answers,
+  and the thinking ceiling sees a thought closed inside a speculative
+  cycle.
+
+### DeepSeek V4 on the one engine
+
+- DeepSeek V4 Flash, Vision-Exp and V4.1 are served by the trunk Athena
+  Logos runs on. What Qwen had, they now have too: a conversation parks out
+  of its lane and comes back with its points, a rewind point is kept where
+  each answer opens, and every lane's state is written to disk and read
+  back from it.
+- The verification step of DSpark reads each weight row closer to the
+  memory's ceiling, with the same bits: the draft head on one warp a row,
+  the dense rows in registers, the indexed attention four heads a block.
+- The indexer picks its top 512 rows by radix selection up to 4,096
+  columns.
+
+### Coming back to a conversation
+
+- A client may name its conversation with the `X-Athena-Conversation`
+  header (and the turn with `X-Athena-Turn`). The engine sends it back to
+  the lane that served it, keeps that lane from new prompts for 30 minutes,
+  and keeps the start of each turn, so an edited question resumes there
+  instead of reading the conversation again.
+  `DELETE /v1/conversations/{id}` lets it go. The name only chooses where:
+  tokens still decide what is resumed.
+- `/v1/openings` keeps a client's opening — its instructions and tools —
+  ready on disk: `PUT /v1/openings/{name}` registers a chat request without
+  its question, the engine prepares it when idle and never removes it on
+  its own; a new chat that starts with it reads only its question.
+- A new conversation resumes the opening it shares with the last one, and
+  a prompt that most of a point some lane holds serves goes to that lane
+  and resumes there.
+- `reasoning_trim: true` tells the engine that the assistant turns sent
+  back without their reasoning were cut on purpose.
+- When memory runs short, the engine gives up the conversation used
+  longest ago, on a lane or parked, instead of refusing the new one; a
+  point taken asks for room before it is kept.
+- A restore from disk reads and verifies its file three times faster.
+- A file on disk is good only for the model file and the engine that wrote
+  it. The files 1.0.5 wrote are removed at the first start of 1.1.0, and
+  each conversation is read once more.
+
+### The system companion
+
+- `athena-sentinel` can watch the engine and bring it back when it is dead
+  or silent, as [docs/sentinel.md](docs/sentinel.md) describes. The watch
+  is off until you turn it on.
+
+### Fixes
+
+- A client that hangs up ends its own connection, not the listener: the
+  next stop stays graceful.
+- A complete prompt sent again after its answer is a new turn, not a replay
+  of the opening request.
+- Two images side by side are never cut apart by a prompt chunk.
+
 ## 1.0.5 - 2026-10-30
 
 Qwen3.8 Flash Next is now Athena Logos, our own four-bit quantization of

@@ -6,7 +6,7 @@
 # several, uncomment one of the environment blocks below.
 services:
   athena-engine:
-    image: ghcr.io/xangel82/athena-engine:1.0.5
+    image: ghcr.io/xangel82/athena-engine:1.1.0
     container_name: athena-engine
     restart: unless-stopped
     # A small init reaps what the processes leave behind and passes docker's

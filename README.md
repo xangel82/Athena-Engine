@@ -302,8 +302,8 @@ V4 Flash took 55 seconds.
    files run without a container once copied out of it:
 
    ```bash
-   docker pull ghcr.io/xangel82/athena-engine:1.0.5
-   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.0.5
+   docker pull ghcr.io/xangel82/athena-engine:1.1.0
+   docker create --name athena-copy ghcr.io/xangel82/athena-engine:1.1.0
    docker cp athena-copy:/opt/athena-engine ./athena-engine
    docker rm athena-copy
    ```
@@ -582,6 +582,8 @@ unlimited.
 | `POST /v1/embeddings` | OpenAI embeddings, with Jina's and vLLM's media parts |
 | `POST /v1/rerank`, `POST /v2/rerank` | Jina and Cohere rerank |
 | `POST /v1/videos`, `GET /v1/videos/{id}`, `GET /v1/videos/{id}/content` | OpenAI video jobs |
+| `PUT /v1/openings/{name}`, `GET /v1/openings[/{name}]`, `DELETE /v1/openings/{name}` | Athena: an opening kept ready on disk |
+| `DELETE /v1/conversations/{id}` | Athena: let a named conversation go |
 | `GET /health` | readiness probe |
 
 For the system companion and administrators, the engine also answers
@@ -594,6 +596,25 @@ base URL — chat front-ends, coding agents and benchmark tools alike.
 [Athena Logos](https://github.com/xangel82/Athena-Logos) is the assistant
 made for it: it uses the chat, the voice, search and video, and the system
 companion's model switch.
+
+### Naming a conversation and its opening
+
+Both are optional; a client that sends neither is served as before.
+
+- `X-Athena-Conversation: ID` (letters, digits, `.`, `_`, `:`, `-`, up to
+  128 characters) and `X-Athena-Turn: N` on a chat request send the
+  conversation back to the lane that served it and keep that lane from new
+  prompts for 30 minutes; the start of each turn is kept, so an edited
+  question resumes there. `DELETE /v1/conversations/{id}` lets it go. The
+  name only chooses where: what is resumed is still proved token by token.
+- `PUT /v1/openings/{name}` with a chat request without its question, plus
+  a `"version"` of your own, registers an opening: the engine prepares it
+  when idle and keeps it on disk until another version replaces it or a
+  `DELETE` lets it go. A new chat that starts with it reads only its
+  question. Names are `[a-z0-9-]`, up to 64 characters, and belong to the
+  API key that registered them.
+- `"reasoning_trim": true` in a chat request says that the assistant turns
+  sent back without their reasoning were cut on purpose.
 
 ### An API key
 
