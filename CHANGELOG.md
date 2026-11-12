@@ -5,7 +5,9 @@
 One engine now serves every model. DeepSeek V4 Flash, its Vision-Exp and
 V4.1 run on the same trunk as Athena Logos, with the same lanes, the same
 points to resume from and the same files on disk; the separate path they
-used to take is gone. Athena Logos reads a long prompt about 40% faster.
+used to take is gone. DeepSeek V4 Flash runs with its authors' FP8
+projections and writes its answers about 30% faster; Athena Logos reads a
+long prompt about 40% faster.
 
 ### Athena Logos
 
@@ -22,6 +24,25 @@ used to take is gone. Athena Logos reads a long prompt about 40% faster.
 - A turn that would end inside its thought closes the thought and answers,
   and the thinking ceiling sees a thought closed inside a speculative
   cycle.
+
+### DeepSeek V4 Flash with its authors' FP8 projections
+
+- DeepSeek V4 Flash and Vision-Exp now run with DeepSeek's own FP8 dense
+  projections — the attention's, the indexer's query and the shared
+  expert's — on the GB10's MXFP8 tensor cores, beside the GGUF's own.
+  `install.sh --model deepseek` (or `visio`) downloads those tensors, 5.9 GB
+  published unchanged in
+  [xangel82/DeepSeek-V4-Flash-Dense-FP8](https://huggingface.co/xangel82/DeepSeek-V4-Flash-Dense-FP8),
+  and writes the `-densefp8.gguf` file the engine runs: antirez's GGUF,
+  every byte of it, with them appended, checked against the file this
+  release was validated with. It takes about a quarter of an hour and 87 GB
+  more disk while it is written; the plain GGUF can then be deleted. A
+  machine that installed DeepSeek with 1.0.5 runs the same command and
+  downloads only the 5.9 GB.
+- With that file, on the engine's own gate: an 8k-token prompt is read at
+  1,306 tokens/s and answered at 29.0 tokens/s, 28.2 after a 32k prompt.
+  1.0.5's plain GGUF read 1,171 and wrote 22.5 in the README's sweep.
+- The plain GGUF still runs, set by name, with its own projections.
 
 ### DeepSeek V4 on the one engine
 

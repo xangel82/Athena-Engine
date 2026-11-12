@@ -37,14 +37,28 @@ authors and are not distributed with the engine; the installer that comes
 with it fetches them, resuming if it is interrupted, and checks each file
 against the checksum its repository publishes.
 
-### DeepSeek V4 Flash — about 93 GB
+### DeepSeek V4 Flash — about 99 GB
 
-From [antirez/deepseek-v4-gguf](https://huggingface.co/antirez/deepseek-v4-gguf):
+From [antirez/deepseek-v4-gguf](https://huggingface.co/antirez/deepseek-v4-gguf) and
+[xangel82/DeepSeek-V4-Flash-Dense-FP8](https://huggingface.co/xangel82/DeepSeek-V4-Flash-Dense-FP8):
 
 | File | Role |
 |---|---|
-| `DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf` | target model |
+| `DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731-densefp8.gguf` | target model, written by the installer |
 | `DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf` | DSpark sidecar (speculative decoding) |
+
+The target model is antirez's
+`DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf`,
+every byte of it, with DeepSeek's own FP8 dense projections appended: the
+attention's q_a, q_b, kv and output projections, the indexer's q_b and the
+shared expert, 730 tensors from
+[deepseek-ai/DeepSeek-V4-Flash-0731](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731)
+at revision `7872f01b1d1fe23eabc4c98b48bffcef5a386062`, published unchanged
+in one 5.9 GB safetensors file. The installer writes it with the converter
+that came with the engine (`deepseek4-fp8-dense`), which needs 87 GB more
+disk for about a quarter of an hour, and checks it against the file the
+release was validated with. The plain GGUF still runs, with its own
+projections and more slowly.
 
 The DSpark sidecar is not published as a GGUF. It belongs beside the model
 it drafts for, and the installer puts it there: if the file is already next
@@ -55,7 +69,7 @@ shards that carry the draft layers, published by DeepSeek at
 (about 10 GB, downloaded once and quantised to 5.6 GB). Without the sidecar
 DeepSeek V4 Flash runs perfectly well, only without speculative decoding.
 
-### DeepSeek V4 Flash Vision-Exp — about 94 GB
+### DeepSeek V4 Flash Vision-Exp — about 100 GB
 
 DeepSeek's experimental checkpoint that reads images,
 [deepseek-ai/DeepSeek-V4-Flash-Vision-Exp](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp),
@@ -64,13 +78,17 @@ quantised the same way as the model above. From
 
 | File | Role |
 |---|---|
-| `DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf` | target model |
+| `DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-densefp8.gguf` | target model, written by the installer |
 | `DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf` | DSpark drafter (speculative decoding) |
 | `DeepSeek-V4-Flash-Vision-Encoder.gguf` | vision encoder — without it the model answers text only |
 
-All three are published as files, so nothing is built on the machine. The
-encoder belongs to this checkpoint only; the launcher refuses it beside the
-model above.
+The target model is written as the one above: antirez's
+`DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf` with
+the FP8 dense projections of
+[deepseek-ai/DeepSeek-V4-Flash-Vision-Exp](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-Vision-Exp)
+at revision `6821d6ad3681a4b137b066b76094fa82ebd0a380` appended. The drafter
+and the encoder are published as files. The encoder belongs to this
+checkpoint only; the launcher refuses it beside the model above.
 
 ### Qwen3.8 Flash Next — about 108 GB
 

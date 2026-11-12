@@ -80,6 +80,23 @@ VISION_ENCODER="DeepSeek-V4-Flash-Vision-Encoder.gguf"
 DEEPSEEK41_REPO="$HF/antirez/deepseek-v4.1-flash-gguf/resolve/main"
 DEEPSEEK41_MODEL="DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf"
 
+# DeepSeek V4 Flash and its Vision-Exp run with the authors' FP8 dense
+# projections beside their own: the file the engine is given is antirez's
+# GGUF, every byte of it, with DeepSeek's own FP8 tensors for the attention
+# and shared-expert projections appended.  Those tensors are published
+# unchanged, one safetensors file per checkpoint, and the converter the
+# release ships (deepseek4-fp8-dense) writes the file here.  The result is
+# checked against the one the release was validated with.
+FP8_REPO="$HF/xangel82/DeepSeek-V4-Flash-Dense-FP8/resolve/main"
+DEEPSEEK_FP8_MODEL="${DEEPSEEK_MODEL%.gguf}-densefp8.gguf"
+DEEPSEEK_FP8_PART="deepseek-v4-flash-0731-dense-fp8.safetensors"
+DEEPSEEK_FP8_SOURCE="deepseek-ai/DeepSeek-V4-Flash-0731@7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+DEEPSEEK_FP8_SHA="fb6660421f46826752edab97fc22b00ad8072ae677bead4b880a75c8bd11333d"
+VISION_FP8_MODEL="${VISION_MODEL%.gguf}-densefp8.gguf"
+VISION_FP8_PART="deepseek-v4-flash-vision-exp-dense-fp8.safetensors"
+VISION_FP8_SOURCE="deepseek-ai/DeepSeek-V4-Flash-Vision-Exp@6821d6ad3681a4b137b066b76094fa82ebd0a380"
+VISION_FP8_SHA="4e7f452f4d4e07fba02cbc73289e66ed2451d498add186f13f19e605ca784d91"
+
 # Qwen3.8 Flash Next as Athena Logos: our NVFP4 quantization of the Qwen
 # Team's own weights, in three parts, with the MTP head and the vision encoder
 # beside them.  Those two are the files earlier releases fetched, kept under
@@ -101,10 +118,16 @@ EOF
 }
 
 # DeepSeek V4 Flash Vision-Exp: the checkpoint that reads images, published
-# with its drafter and its image encoder, so nothing is built here.
+# with its drafter and its image encoder.
 vision_files() {
   cat <<EOF
 $VISION_MODEL|$DEEPSEEK_REPO/$VISION_MODEL|87 GB|model
+EOF
+  vision_extras
+}
+
+vision_extras() {
+  cat <<EOF
 $VISION_DRAFT|$DEEPSEEK_REPO/$VISION_DRAFT|6.0 GB|draft
 $VISION_ENCODER|$DEEPSEEK_REPO/$VISION_ENCODER|0.9 GB|mmproj
 EOF
@@ -332,6 +355,102 @@ build_dspark() {
   say "  the sidecar could not be built; DeepSeek will run without"
   say "  speculative decoding."
   return 1
+}
+
+# The model file of the slot being installed.
+slot_model() {
+  case "$SLOT" in
+    2) printf '%s' "$ROLE_model2" ;;
+    3) printf '%s' "$ROLE_model3" ;;
+    4) printf '%s' "$ROLE_model4" ;;
+    *) printf '%s' "$ROLE_model" ;;
+  esac
+}
+
+# Is this the FP8 file the release was validated with?  Read whole, so only
+# when asked (--verify) or right after it is written.
+fp8_is_validated() {
+  local path="$1" want="$2" have
+  command -v sha256sum >/dev/null || return 0
+  say "  check $(basename "$path")"
+  have="$(sha256sum "$path" | cut -d' ' -f1)"
+  [ "$have" = "$want" ]
+}
+
+# The authors' FP8 projections appended to the GGUF just resolved: their
+# tensors are downloaded (5.9 GB) and the file is written beside the GGUF, or
+# under the models directory when that folder is not ours to write.  Anything
+# that stops it leaves the plain GGUF in place, which the engine runs as
+# before, only slower.
+build_fp8() {  # folder under the models directory, FP8 file, authors' tensors, their source, sha256
+  local area="$1" name="$2" part="$3" source="$4" want="$5"
+  local plain dir out tool need free
+  plain="$(slot_model)"
+  [ -n "$plain" ] && [ -f "$plain" ] || return 1
+  dir="$(dirname "$plain")"
+  [ -w "$dir" ] || dir="$MODELS_DIR/$area"
+  out="$dir/$name"
+  tool="$(release_tool deepseek4-fp8-dense)"
+  if [ -z "$tool" ]; then
+    say "  the FP8 builder (deepseek4-fp8-dense) is not in this release;"
+    say "  DeepSeek runs on its own projections."
+    return 0
+  fi
+  ROLE_fp8=""
+  resolve "$MODELS_DIR/$area" "fp8/$part" "$FP8_REPO/$part" "5.9 GB" fp8 || {
+    say "  without the FP8 projections DeepSeek runs on its own, more slowly"
+    return 1
+  }
+  # The new file is the GGUF and the authors' tensors together; the GGUF is
+  # left where it is until it is written.
+  need=$(( ( $(wc -c < "$plain") + $(wc -c < "$ROLE_fp8") ) / 1000000000 + 2 ))
+  free="$(free_gb "$dir")"
+  if [ -n "$free" ] && [ "$free" -lt "$need" ]; then
+    say "  writing $name needs $need GB in $dir and $free GB are free;"
+    say "  DeepSeek runs on its own projections. Make room and run again."
+    return 1
+  fi
+  say ""
+  say "  building $name into $dir — about a quarter of an hour"
+  if ! "$tool" --gguf "$plain" --fp8 "$ROLE_fp8" --out "$out.partial" --source "$source"; then
+    rm -f "$out.partial"
+    say "  the FP8 file could not be built; DeepSeek runs on its own projections."
+    return 1
+  fi
+  if ! fp8_is_validated "$out.partial" "$want"; then
+    mv -f "$out.partial" "$out.bad"
+    say "  the file written is not the one the release was validated with;"
+    say "  kept as $(basename "$out").bad. DeepSeek runs on its own projections."
+    return 1
+  fi
+  mv -f "$out.partial" "$out"
+  remember model "$out"
+  say "  built $name"
+  say "  $(basename "$plain") is no longer needed by the engine: delete it to"
+  say "  have its $(human_size "$(wc -c < "$plain")") back."
+  return 0
+}
+
+# A DeepSeek checkpoint: its FP8 file when it is already on this machine,
+# else the GGUF and then the FP8 file written out of it.
+install_deepseek_fp8() {  # title, folder, list, FP8 file, authors' tensors, source, sha256[, list beside the FP8 file]
+  local title="$1" area="$2" list="$3" name="$4" part="$5" source="$6" want="$7" extras="${8:-}"
+  if have_file "$MODELS_DIR/$area" "$name" model; then
+    say ""
+    say "$title"
+    say "  have  $name"
+    if [ "$VERIFY" = 1 ] && ! fp8_is_validated "$(slot_model)" "$want"; then
+      say "  it is not the file the release was validated with"
+      return 1
+    fi
+    if [ -n "$extras" ]; then
+      install_model "$title: the rest" "$extras" "$area" || return 1
+    fi
+    return 0
+  fi
+  install_model "$title" "$list" "$area" || return 1
+  build_fp8 "$area" "$name" "$part" "$source" "$want" || true
+  return 0
 }
 
 # ------------------------------------------------------------------- voice
@@ -779,6 +898,8 @@ SLOT_NAMES=()
 # Not a model file: the folder the DSpark weight shards were found in, which
 # the sidecar is built from and which belongs to neither slot.
 ROLE_shards=""
+# Nor this: the authors' FP8 tensors the FP8 file is written from.
+ROLE_fp8=""
 # The speech models, which belong to no slot either: the engine serves them
 # beside whichever model answers.
 ROLE_tts=""
@@ -793,6 +914,10 @@ ROLE_video=""
 remember() {
   if [ "$1" = shards ]; then
     ROLE_shards="$(dirname "$2")"
+    return 0
+  fi
+  if [ "$1" = fp8 ]; then
+    ROLE_fp8="$2"
     return 0
   fi
   if [ "$SLOT" = 2 ]; then
@@ -969,14 +1094,16 @@ install_one() {
       install_model "Qwen3.8 Flash Next" "$(qwen_files)" qwen || return 1
       ;;
     visio|vision)
-      install_model "DeepSeek V4 Flash Vision-Exp" "$(vision_files)" deepseek-vision || return 1
+      install_deepseek_fp8 "DeepSeek V4 Flash Vision-Exp" deepseek-vision "$(vision_files)" \
+        "$VISION_FP8_MODEL" "$VISION_FP8_PART" "$VISION_FP8_SOURCE" "$VISION_FP8_SHA" "$(vision_extras)" || return 1
       ;;
     deepseek4.1)
       install_model "DeepSeek V4.1 Flash" "$(deepseek41_files)" deepseek-v41 || return 1
       ;;
     deepseek)
       local failed=0
-      install_model "DeepSeek V4 Flash" "$(deepseek_files)" deepseek || failed=1
+      install_deepseek_fp8 "DeepSeek V4 Flash" deepseek "$(deepseek_files)" \
+        "$DEEPSEEK_FP8_MODEL" "$DEEPSEEK_FP8_PART" "$DEEPSEEK_FP8_SOURCE" "$DEEPSEEK_FP8_SHA" || failed=1
       # The sidecar sits beside the model: if it is already there — or
       # anywhere under --from — the shards and the build are spared.
       if have_file "$(model_dir "$MODELS_DIR/deepseek")" "$DSPARK_FILE" draft; then
@@ -1000,11 +1127,13 @@ main() {
     say ""
     say "Which model would you like to install?"
     say "  1) Qwen3.8 Flash Next            — 108 GB, reads images, the fastest"
-    say "  2) DeepSeek V4 Flash             — 87 GB"
-    say "  3) DeepSeek V4 Flash Vision-Exp  — 94 GB, reads images"
-    say "  4) Qwen and DeepSeek             — 195 GB; one runs, and a conversation"
+    say "  2) DeepSeek V4 Flash             — 93 GB"
+    say "  3) DeepSeek V4 Flash Vision-Exp  — 100 GB, reads images"
+    say "  4) Qwen and DeepSeek             — 201 GB; one runs, and a conversation"
     say "                                     calls the other in with %switch"
-    say "  5) all three                     — 289 GB"
+    say "  5) all three                     — 301 GB"
+    say "DeepSeek's FP8 file is written here out of its GGUF, which needs 87 GB"
+    say "more for a quarter of an hour; the GGUF can then be deleted."
     say "  6) DeepSeek V4.1 Flash           — 366 GB, more than memory holds: the"
     say "                                     engine reads it from the disk as it runs"
     say "Several numbers, as in 1,6, install each; the first is the one that starts."

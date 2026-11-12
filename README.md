@@ -97,8 +97,8 @@ Linux (arm64) from its [latest release](https://github.com/xangel82/Athena-Logos
 
 | Model | Weights | Context | Speculative decoding | Images and documents |
 |---|---|---|---|---|
-| DeepSeek V4 Flash | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark sidecar | — |
-| DeepSeek V4 Flash Vision-Exp | IQ2_XXS mix, Q8 projections and shared experts | 262,144 tokens | DSpark drafter | images with `DeepSeek-V4-Flash-Vision-Encoder.gguf`; PDF, DOCX, Markdown, HTML, text |
+| DeepSeek V4 Flash | IQ2_XXS mix, Q8 projections and shared experts, DeepSeek's FP8 dense projections beside them | 262,144 tokens | DSpark sidecar | — |
+| DeepSeek V4 Flash Vision-Exp | IQ2_XXS mix, Q8 projections and shared experts, DeepSeek's FP8 dense projections beside them | 262,144 tokens | DSpark drafter | images with `DeepSeek-V4-Flash-Vision-Encoder.gguf`; PDF, DOCX, Markdown, HTML, text |
 | Qwen3.8 Flash Next | Athena Logos: NVFP4 experts and n-gram table, MXFP8 projections | 262,144 tokens | MTP head | images with `mmproj-F16.gguf`; PDF, DOCX, Markdown, HTML, text |
 | DeepSeek V4.1 Flash (1017) | IQ2_XXS gate/up and Q2_K down experts with imatrix, Q8 attention, shared experts and head, FP8 Engram tables | 16,384 tokens | — | — |
 
@@ -325,9 +325,9 @@ V4 Flash took 55 seconds.
    ./athena-engine/install.sh --model qwen --voice --rag --video   # and speech, search and video
    ```
 
-   It downloads about 108 GB for Qwen3.8 Flash Next, 87 GB for DeepSeek V4
-   Flash, 94 GB for DeepSeek V4 Flash Vision-Exp, 195 GB for Qwen and
-   DeepSeek or 289 GB for all three. DeepSeek V4.1 Flash is 366 GB more, and
+   It downloads about 108 GB for Qwen3.8 Flash Next, 93 GB for DeepSeek V4
+   Flash, 100 GB for DeepSeek V4 Flash Vision-Exp, 201 GB for Qwen and
+   DeepSeek or 301 GB for all three. DeepSeek V4.1 Flash is 366 GB more, and
    only when you name it: `all` means the other three, and the menu offers it
    as a choice of its own. The installer checks each file against the checksum
    the repository publishes, and **resumes**: stop it at any point, run the
@@ -358,7 +358,18 @@ V4 Flash took 55 seconds.
    installer builds it on the machine, out of the three official weight
    shards, with the converter that came with the engine. It takes a few
    minutes and needs no compiler of yours. Vision-Exp's drafter and image
-   encoder are published beside it, so nothing is built for it.
+   encoder are published beside it.
+
+   DeepSeek V4 Flash and Vision-Exp run with DeepSeek's own FP8 dense
+   projections beside the GGUF's. The installer downloads those tensors
+   (5.9 GB each, published unchanged in
+   [xangel82/DeepSeek-V4-Flash-Dense-FP8](https://huggingface.co/xangel82/DeepSeek-V4-Flash-Dense-FP8))
+   and writes the `-densefp8.gguf` file the engine runs: antirez's GGUF, every
+   byte of it, with those tensors appended. It takes about a quarter of an
+   hour and 87 GB more disk while it is written, and the result is checked
+   against the file the release was validated with; the plain GGUF can then
+   be deleted. A machine that installed DeepSeek with 1.0.5 runs the same
+   command and downloads only the 5.9 GB.
 
 3. Start the engine:
 
@@ -370,7 +381,7 @@ V4 Flash took 55 seconds.
    Or point it at the files yourself. For DeepSeek V4 Flash:
 
    ```bash
-   export ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
+   export ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731-densefp8.gguf
    export ATHENA_DRAFT=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
    ./athena-engine/athena-engine.sh
    ```
@@ -378,7 +389,7 @@ V4 Flash took 55 seconds.
    For DeepSeek V4 Flash Vision-Exp, with its image encoder:
 
    ```bash
-   export ATHENA_MODEL=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
+   export ATHENA_MODEL=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-densefp8.gguf
    export ATHENA_DRAFT=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
    export ATHENA_MMPROJ=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
    ./athena-engine/athena-engine.sh
@@ -529,9 +540,9 @@ first:
 export ATHENA_MODEL=/models/Athena-Logos/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-00001-of-00003.gguf
 export ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
 export ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf
-export ATHENA_MODEL_2=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
+export ATHENA_MODEL_2=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731-densefp8.gguf
 export ATHENA_DRAFT_2=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
-export ATHENA_MODEL_3=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
+export ATHENA_MODEL_3=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-densefp8.gguf
 export ATHENA_DRAFT_3=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 export ATHENA_MMPROJ_3=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
 export ATHENA_MODEL_4=/models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
@@ -660,8 +671,8 @@ included: a request for any other model is answered with `404 model_not_found`.
 
 ## Requirements
 
-An NVIDIA GB10 with 128 GB of unified memory, DGX OS, and about 93 GB
-(DeepSeek V4 Flash), 94 GB (DeepSeek V4 Flash Vision-Exp), 108 GB (Qwen3.8
+An NVIDIA GB10 with 128 GB of unified memory, DGX OS, and about 99 GB
+(DeepSeek V4 Flash), 100 GB (DeepSeek V4 Flash Vision-Exp), 108 GB (Qwen3.8
 Flash Next) or 366 GB (DeepSeek V4.1 Flash) of disk for each model's files —
 V4.1's on a fast local SSD, since the engine reads from it as it runs.
 Speech takes about 14 GB more, search about 7 GB and video 71 GB, and video

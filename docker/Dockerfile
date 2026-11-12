@@ -51,7 +51,7 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 #   ATHENA_DRAFT=/models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
 #   ATHENA_MMPROJ=/models/MMPROJ/mmproj-F16.gguf       (to answer about images)
 # For DeepSeek V4 Flash Vision-Exp, the DeepSeek that reads images:
-#   ATHENA_MODEL=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
+#   ATHENA_MODEL=/models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-densefp8.gguf
 #   ATHENA_DRAFT=/models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
 #   ATHENA_MMPROJ=/models/DeepSeek-V4-Flash-Vision-Encoder.gguf
 # For DeepSeek V4.1 Flash (the 1017 checkpoint), larger than the machine and
@@ -71,7 +71,9 @@ ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 #   ATHENA_RERANK_MODEL=/models/retrieval/Qwen3-Reranker-0.6B-Q8_0.gguf
 # Video (/v1/videos), LTX 2.5's five GGUFs in one folder:
 #   ATHENA_VIDEO_MODEL_DIR=/models/video
-ENV ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf \
+# The DeepSeek files are the -densefp8 ones install.sh writes (the authors'
+# FP8 projections appended); the plain GGUFs run too, set by name.
+ENV ATHENA_MODEL=/models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731-densefp8.gguf \
     ATHENA_DRAFT=/models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf \
     ATHENA_KV_DIR=/kv \
     ATHENA_STATE_DIR=/state \

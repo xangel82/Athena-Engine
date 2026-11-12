@@ -32,7 +32,7 @@ services:
     #
     # DeepSeek V4 Flash Vision-Exp instead, the DeepSeek that reads images:
     # environment:
-    #   ATHENA_MODEL: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
+    #   ATHENA_MODEL: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-densefp8.gguf
     #   ATHENA_DRAFT: /models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
     #   ATHENA_MMPROJ: /models/DeepSeek-V4-Flash-Vision-Encoder.gguf
     #
@@ -46,9 +46,9 @@ services:
     #   ATHENA_MODEL: /models/Athena-Logos/Qwen3.8-Flash-Next-NVFP4-Athena-Logos-00001-of-00003.gguf
     #   ATHENA_DRAFT: /models/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf
     #   ATHENA_MMPROJ: /models/MMPROJ/mmproj-F16.gguf
-    #   ATHENA_MODEL_2: /models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731.gguf
+    #   ATHENA_MODEL_2: /models/DeepSeek-V4-Flash-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-chat-v2-imatrix-0731-densefp8.gguf
     #   ATHENA_DRAFT_2: /models/DeepSeek-V4-Flash-DSpark-IQ2XXS-Q2K-Q8.gguf
-    #   ATHENA_MODEL_3: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8.gguf
+    #   ATHENA_MODEL_3: /models/DeepSeek-V4-Flash-Vision-Exp-IQ2XXS-w2Q2K-AProjQ8-SExpQ8-OutQ8-densefp8.gguf
     #   ATHENA_DRAFT_3: /models/DeepSeek-V4-Flash-Vision-Exp-DSpark-support.gguf
     #   ATHENA_MMPROJ_3: /models/DeepSeek-V4-Flash-Vision-Encoder.gguf
     #   ATHENA_MODEL_4: /models/DeepSeek-V4.1-Flash-1017-IQ2_XXS-Q2_K-imatrix.gguf
