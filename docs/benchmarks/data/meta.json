@@ -12,6 +12,19 @@
   "launcher": "athena-engine.sh (Athena-Engine 7086b11)",
   "date": "2026-09-22T06:57:06+0000",
   "measurements": {
+    "1.1.0 at every length, the three models of the README (prefill_phase.csv, decode.csv, the README's tables and charts)": {
+      "date": "2026-11-12T20:30:45+0000",
+      "release": "1.1.0",
+      "binary": "bin/athena-engine of the 1.1.0 package (source 34ab1334ed86, stripped sha256 b2910eb5...) with the package's launcher",
+      "models": "DeepSeek V4 Flash 0731 -densefp8.gguf (sha256 fb666042...) with its DSpark sidecar; Vision-Exp -densefp8.gguf (sha256 4e7f452f...) with its DSpark drafter and image encoder; Qwen3.8-Flash-Next-NVFP4-Athena-Logos.gguf (sha256 5ac66e73...) with its MTP head and vision encoder",
+      "launcher": "athena-engine.sh of 1.1.0, one model per start, 262,144-token context, KV checkpoints and durable saves on disk",
+      "method": "two throw-away 8k prompts, then one fresh prompt per length (a new session line in front, so nothing cached) asking for a three-sentence summary in 256 tokens at temperature 0, streamed. Prefill: the engine's PHASE prefill line (DS4_PHASE_TRACE=1); generation: tokens after the first over the time from the first streamed token to the last. DeepSeek's 256k point from the same prompt cut to 254,643 tokens, the full one being past the context. One repetition per length."
+    },
+    "tool calling, DeepSeek V4 Flash and Vision-Exp with their FP8 projections (tooleval.csv)": {
+      "date": "2026-11-08",
+      "tool": "tool-eval-bench 2.7.0, --temperature 0 --seed 42 --parallel 4",
+      "results": "DeepSeek V4 Flash 92, Vision-Exp 87"
+    },
     "Qwen3.8 Flash Next as Athena Logos at every length (prefill_phase.csv, decode.csv, the README's Qwen columns and charts)": {
       "date": "2026-10-30T01:55:26+0000",
       "release": "1.0.5",
