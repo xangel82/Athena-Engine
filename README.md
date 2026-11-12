@@ -151,22 +151,20 @@ draft — the DSpark sidecar for DeepSeek, the DSpark drafter published with
 Vision-Exp, the MTP head for Qwen. The raw data, and the machine and binary
 they were taken on, are in [docs/benchmarks/data](docs/benchmarks/data).
 
-From 1.0.5 Qwen3.8 Flash Next runs as Athena Logos. Against the 4-bit IQ4_XS
-GGUF the engine ran up to 1.0.3, on the same machine with the same 1.0.5
-binary:
-
-| Qwen3.8 Flash Next | Athena Logos | IQ4_XS |
-|---|---|---|
-| Prefill, 8k-token prompt | **1,762 tokens/s** | 1,277 tokens/s |
-| Generation after an 8k prompt | **39.6 tokens/s** | 37.9 tokens/s |
-| Generation, a short chat answer | **46.6 tokens/s** | 41.6 tokens/s |
-| tool-eval-bench 2.7, temperature 1.0, seed 42, `--parallel 4` | 88 | 86 to 88 |
-
 The columns and charts below are 1.1.0, measured on 2026-11-12: DeepSeek V4
 Flash and Vision-Exp with their authors' FP8 dense projections, Qwen3.8 Flash
 Next as Athena Logos, each started alone by the launcher of the release.
-With 1.0.5 the same columns read 1,171, 1,127 and 1,763 tokens/s at 8k and
-wrote 22.5, 16.6 and 39.0.
+Against 1.0.5, on the same machine and the same way:
+
+| | 1.1.0 | 1.0.5 |
+|---|---|---|
+| Athena Logos, prefill of an 8k-token prompt | **2,440 tokens/s** | 1,763 tokens/s |
+| Athena Logos, prefill of a 256k-token prompt | **2,137 tokens/s** | 1,562 tokens/s |
+| Athena Logos, generation after an 8k prompt | **46.0 tokens/s** | 39.0 tokens/s |
+| DeepSeek V4 Flash, prefill of an 8k-token prompt | **1,303 tokens/s** | 1,171 tokens/s |
+| DeepSeek V4 Flash, generation after an 8k prompt | **27.3 tokens/s** | 22.5 tokens/s |
+| Vision-Exp, prefill of an 8k-token prompt | **1,308 tokens/s** | 1,127 tokens/s |
+| Vision-Exp, generation after an 8k prompt | **21.2 tokens/s** | 16.6 tokens/s |
 
 ### Reading a long document
 
