@@ -38,7 +38,7 @@ model.
 
 **Within reach.** Advanced AI should not be the privilege of whoever owns a
 data center. One desktop machine is enough, and the engine is free for
-personal use, research, education, and developers and small companies at work.
+personal use, research, education, non-profits, and small companies at work.
 
 **With Athena Logos.** The engine runs the models; **[Athena Logos](https://github.com/xangel82/Athena-Logos)**
 is the assistant built on top of it. Talk to her, bring your documents and
@@ -697,10 +697,9 @@ small companies. In short:
 - **Free for noncommercial use** — personal use, research, study, hobby
   projects, and use by schools, public research institutions, charities and
   government bodies.
-- **Free for developers and small companies at work** — use inside your own
-  business, as a coding assistant, for your agents and your internal tools, if
-  your company has fewer than 30 people and less than 500,000 USD in
-  yearly revenue.
+- **Free for small companies at work** — use inside your own business, as a
+  coding assistant, for your agents and your internal tools, if your company
+  has fewer than 30 people and less than 500,000 USD in yearly revenue.
 - **No redistribution, no modified versions, and no offering it to others as a
   product or service.** Get the engine from this project's container image.
 - **Any other commercial use needs a separate license.** Open an issue in this
