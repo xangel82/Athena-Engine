@@ -688,6 +688,15 @@ Athena's Engine builds on ds4 and on
 the fork that brought it to the GB10 with DSpark speculative decoding.
 Thank you, Salvatore.
 
+## Privacy
+
+The engine and its system companion connect to nothing outside your machine
+while they run: no telemetry, no usage statistics, no update or licence
+checks. `install.sh` contacts only Hugging Face, to download the model files
+you asked for. Conversations stay on the machine, in the engine's KV cache on
+disk. Where each kind of data goes is on the
+[EULA and Privacy page](https://www.palaferri.com/athena/en/privacy.html).
+
 ## Licenses and contributions
 
 Athena's Engine is distributed as binaries under the
@@ -706,6 +715,8 @@ small companies. In short:
   repository to get in touch.
 
 This summary is for convenience; the [license text](LICENSE.md) is what applies.
+A plain-language summary and the privacy notice are on the
+[EULA and Privacy page](https://www.palaferri.com/athena/en/privacy.html).
 
 If you publish benchmarks or other results obtained with the engine, please
 credit **Athena's Engine by Marco Palaferri**.
